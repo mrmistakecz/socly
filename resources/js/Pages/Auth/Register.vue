@@ -1,7 +1,7 @@
 <script setup>
 import { useForm, Head, Link } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import { Sparkles, Eye, EyeOff, Mail, Lock, User, AtSign } from 'lucide-vue-next'
+import { Eye, EyeOff, Mail, Lock, User, AtSign } from 'lucide-vue-next'
 
 const form = useForm({
   name: '',

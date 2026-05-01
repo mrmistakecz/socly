@@ -1,71 +1,44 @@
 <script setup>
-import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { router } from '@inertiajs/vue3'
+import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send } from 'lucide-vue-next'
 
-const conversations = [
-  {
-    id: 1,
-    name: 'Karolína M.',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
-    lastMessage: 'Děkuji za podporu!',
-    time: 'Teď',
-    unread: 2,
-    isOnline: true,
-    verified: true,
-    isVIP: true,
-    hasMedia: false,
-  },
-  {
-    id: 2,
-    name: 'Tereza B.',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=face',
-    lastMessage: 'Nový obsah bude zítra!',
-    time: 'před 5 min',
-    unread: 0,
-    isOnline: true,
-    verified: true,
-    isVIP: false,
-    hasMedia: true,
-  },
-  {
-    id: 3,
-    name: 'Nikola S.',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
-    lastMessage: 'Ráda, že se ti líbí',
-    time: 'před 1 hod',
-    unread: 0,
-    isOnline: false,
-    verified: false,
-    isVIP: false,
-    hasMedia: false,
-  },
-  {
-    id: 4,
-    name: 'Eliška V.',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-    lastMessage: 'Už brzy bude živé vysílání!',
-    time: 'před 3 hod',
-    unread: 1,
-    isOnline: true,
-    verified: true,
-    isVIP: true,
-    hasMedia: false,
-    hasVideo: true,
-  },
-  {
-    id: 5,
-    name: 'Adéla K.',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop&crop=face',
-    lastMessage: 'Díky za tip!',
-    time: 'včera',
-    unread: 0,
-    isOnline: false,
-    verified: true,
-    isVIP: false,
-    hasMedia: true,
-  },
-]
+const props = defineProps({
+  conversations: { type: Array, default: () => [] },
+})
 
-const onlineConversations = conversations.filter(c => c.isOnline)
+const searchFilter = ref('')
+const selectedConv = ref(null)
+const newMessage = ref('')
+
+const filteredConversations = computed(() => {
+  if (!searchFilter.value) return props.conversations
+  const q = searchFilter.value.toLowerCase()
+  return props.conversations.filter(c => c.name.toLowerCase().includes(q))
+})
+
+const totalUnread = computed(() => props.conversations.reduce((sum, c) => sum + c.unread, 0))
+
+const onlineConversations = computed(() => props.conversations.filter(c => c.isOnline))
+
+const openConversation = (conv) => {
+  selectedConv.value = conv
+  if (conv.unread > 0) {
+    router.post(`/messages/${conv.id}/read`, {}, { preserveScroll: true, preserveState: true })
+  }
+}
+
+const sendMessage = () => {
+  if (!newMessage.value.trim() || !selectedConv.value) return
+  router.post('/messages', {
+    receiver_id: selectedConv.value.id,
+    body: newMessage.value.trim(),
+  }, {
+    preserveScroll: true,
+    preserveState: true,
+    onSuccess: () => { newMessage.value = '' },
+  })
+}
 </script>
 
 <template>
@@ -75,7 +48,7 @@ const onlineConversations = conversations.filter(c => c.isOnline)
       <div class="flex items-center justify-between mb-1">
         <h1 class="text-2xl font-bold text-foreground">Zprávy</h1>
         <div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10">
-          <span class="text-xs font-semibold text-primary">3 nové</span>
+          <span class="text-xs font-semibold text-primary">{{ totalUnread }} {{ totalUnread === 1 ? 'nová' : 'nové' }}</span>
         </div>
       </div>
       <p class="text-sm text-muted-foreground">Vaše konverzace s tvůrci</p>
@@ -86,6 +59,7 @@ const onlineConversations = conversations.filter(c => c.isOnline)
       <div class="flex items-center glass-card rounded-2xl px-4 py-3.5 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
         <Search class="w-5 h-5 text-muted-foreground mr-3" />
         <input
+          v-model="searchFilter"
           type="text"
           placeholder="Hledat v konverzacích..."
           class="flex-1 bg-transparent text-foreground placeholder-muted-foreground text-sm outline-none"
@@ -186,8 +160,9 @@ const onlineConversations = conversations.filter(c => c.isOnline)
       <h3 class="text-sm font-medium text-muted-foreground mb-3">Všechny zprávy</h3>
       <div class="flex flex-col gap-1">
         <button
-          v-for="conv in conversations"
+          v-for="conv in filteredConversations"
           :key="conv.id"
+          @click="openConversation(conv)"
           class="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/30 transition-all touch-feedback text-left group"
         >
           <div class="relative flex-shrink-0">
@@ -245,6 +220,32 @@ const onlineConversations = conversations.filter(c => c.isOnline)
             </div>
             <CheckCheck v-else class="w-4 h-4 text-primary" />
           </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-if="!filteredConversations.length" class="flex flex-col items-center justify-center py-16 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-secondary/50 flex items-center justify-center mb-4">
+        <Search class="w-8 h-8 text-muted-foreground" />
+      </div>
+      <p class="text-lg font-semibold mb-1">Žádné konverzace</p>
+      <p class="text-sm text-muted-foreground">Sledujte tvůrce a začněte konverzaci</p>
+    </div>
+
+    <!-- Quick Reply Bar -->
+    <div v-if="selectedConv" class="fixed bottom-20 left-0 right-0 px-4 pb-4 z-30 lg:bottom-4">
+      <div class="glass-card rounded-2xl p-3 flex items-center gap-3">
+        <img :src="selectedConv.avatar" class="w-8 h-8 rounded-lg object-cover" />
+        <input
+          v-model="newMessage"
+          type="text"
+          :placeholder="`Odpověď pro ${selectedConv.name}...`"
+          class="flex-1 bg-transparent text-sm outline-none placeholder-muted-foreground"
+          @keydown.enter="sendMessage"
+        />
+        <button @click="sendMessage" class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+          <Send class="w-4 h-4" />
         </button>
       </div>
     </div>

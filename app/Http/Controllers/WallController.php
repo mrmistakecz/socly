@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class WallController extends Controller
@@ -71,10 +73,64 @@ class WallController extends Controller
                 'badge' => $i + 1,
             ]);
 
+        // Conversations: get unique users the current user has exchanged messages with
+        $conversations = collect();
+        if ($user) {
+            $partnerIds = Message::where('sender_id', $user->id)
+                ->orWhere('receiver_id', $user->id)
+                ->selectRaw('CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as partner_id', [$user->id])
+                ->distinct()
+                ->pluck('partner_id');
+
+            $conversations = User::whereIn('id', $partnerIds)->get()->map(function ($partner) use ($user) {
+                $lastMsg = Message::where(function ($q) use ($user, $partner) {
+                    $q->where('sender_id', $user->id)->where('receiver_id', $partner->id);
+                })->orWhere(function ($q) use ($user, $partner) {
+                    $q->where('sender_id', $partner->id)->where('receiver_id', $user->id);
+                })->latest()->first();
+
+                $unread = Message::where('sender_id', $partner->id)
+                    ->where('receiver_id', $user->id)
+                    ->where('is_read', false)
+                    ->count();
+
+                return [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'username' => $partner->username,
+                    'avatar' => $partner->avatar,
+                    'verified' => $partner->is_verified,
+                    'isVIP' => $partner->is_vip,
+                    'isOnline' => false,
+                    'lastMessage' => $lastMsg?->body ?? '',
+                    'time' => $lastMsg ? $lastMsg->created_at->locale('cs')->diffForHumans(short: true) : '',
+                    'unread' => $unread,
+                    'hasMedia' => false,
+                ];
+            })->sortByDesc('unread')->values();
+        }
+
+        $trendingPosts = Post::with('user')
+            ->withCount('likes')
+            ->orderByDesc('likes_count')
+            ->limit(9)
+            ->get()
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'image' => $p->image,
+                'isLocked' => $p->is_locked,
+                'isVideo' => $p->is_video,
+                'likes' => $this->formatNumber($p->likes_count),
+                'caption' => $p->caption,
+                'creator' => ['id' => $p->user->id],
+            ]);
+
         return Inertia::render('Wall', [
             'posts' => $posts,
             'stories' => $creators,
             'topCreators' => $topCreators,
+            'trendingPosts' => $trendingPosts,
+            'conversations' => $conversations,
         ]);
     }
 

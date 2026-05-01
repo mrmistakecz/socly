@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { Bell, Sparkles, Search, Crown, BadgeCheck } from 'lucide-vue-next'
+import { Bell, Search, Crown, BadgeCheck } from 'lucide-vue-next'
 import axios from 'axios'
 
 const showSearch = ref(false)

@@ -12,6 +12,8 @@ const props = defineProps({
   posts: { type: Array, default: () => [] },
   stories: { type: Array, default: () => [] },
   topCreators: { type: Array, default: () => [] },
+  trendingPosts: { type: Array, default: () => [] },
+  conversations: { type: Array, default: () => [] },
 })
 
 const page = usePage()
@@ -57,7 +59,10 @@ const screenProps = computed(() => {
     return { posts: props.posts, stories: props.stories }
   }
   if (activeTab.value === 'discover') {
-    return { onOpenLive: handleOpenLive, topCreators: props.topCreators }
+    return { onOpenLive: handleOpenLive, topCreators: props.topCreators, trendingPosts: props.trendingPosts }
+  }
+  if (activeTab.value === 'messages') {
+    return { conversations: props.conversations }
   }
   return {}
 })

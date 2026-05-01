@@ -33,6 +33,23 @@ const liked = ref(props.isLiked)
 const bookmarked = ref(props.isBookmarked)
 const currentLikes = ref(props.likes)
 const showHeart = ref(false)
+const showComments = ref(false)
+const commentText = ref('')
+const commenting = ref(false)
+
+const handleComment = () => {
+  if (!commentText.value.trim() || commenting.value) return
+  commenting.value = true
+  router.post(`/posts/${props.id}/comment`, { body: commentText.value.trim() }, {
+    preserveScroll: true,
+    preserveState: true,
+    onSuccess: () => {
+      commentText.value = ''
+      commenting.value = false
+    },
+    onError: () => { commenting.value = false },
+  })
+}
 
 const handleLike = () => {
   liked.value = !liked.value
@@ -125,7 +142,7 @@ const goToProfile = () => {
 
       <div v-if="!isLocked" class="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg glass text-white/90">
         <Eye class="w-3.5 h-3.5" />
-        <span class="text-xs font-medium">12.4K</span>
+        <span class="text-xs font-medium">{{ currentLikes > 0 ? currentLikes.toLocaleString() : '—' }}</span>
       </div>
     </div>
 
@@ -144,7 +161,7 @@ const goToProfile = () => {
             <span class="text-sm font-medium">{{ currentLikes.toLocaleString() }}</span>
           </button>
           
-          <button class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">
+          <button @click="showComments = !showComments" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">
             <MessageCircle class="w-5 h-5" />
             <span class="text-sm font-medium">{{ comments }}</span>
           </button>
@@ -166,9 +183,27 @@ const goToProfile = () => {
       </div>
 
       <p v-if="caption" class="text-sm leading-relaxed">
-        <span class="font-semibold mr-1.5 hover:text-primary cursor-pointer">{{ creator.name }}</span>
+        <span class="font-semibold mr-1.5 hover:text-primary cursor-pointer" @click="goToProfile">{{ creator.name }}</span>
         <span class="text-muted-foreground">{{ caption }}</span>
       </p>
+
+      <!-- Comment Input -->
+      <div v-if="showComments" class="mt-3 flex items-center gap-2">
+        <input
+          v-model="commentText"
+          type="text"
+          placeholder="Napsat komentář..."
+          class="flex-1 px-3 py-2 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+          @keydown.enter="handleComment"
+        />
+        <button
+          @click="handleComment"
+          :disabled="!commentText.trim() || commenting"
+          class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary hover:text-white transition-all disabled:opacity-50"
+        >
+          Odeslat
+        </button>
+      </div>
     </div>
   </article>
 </template>
