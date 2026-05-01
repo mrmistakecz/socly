@@ -87,7 +87,7 @@ const slots = defineSlots()
       <nav class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-card/30 border-r border-border/30 flex-col p-4 z-40">
         <div class="flex items-center px-4 py-5 mb-4 border-b border-border/50">
           <h1 class="text-2xl font-black tracking-tight">
-            <span class="text-gradient-premium">SOCLY</span><span class="inline-block text-primary animate-pulse-spark">✦</span>
+            <span class="text-gradient-premium">SOCLY</span><span class="inline-block animate-pulse-spark text-sm ml-0.5">😉</span>
           </h1>
         </div>
         

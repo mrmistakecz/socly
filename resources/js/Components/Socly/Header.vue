@@ -39,7 +39,7 @@ const goToProfile = (id) => {
       <!-- Logo -->
       <div class="flex items-center">
         <h1 class="text-2xl font-black tracking-tight">
-          <span class="text-gradient-premium">SOCLY</span><span class="inline-block text-primary animate-pulse-spark">✦</span>
+          <span class="text-gradient-premium">SOCLY</span><span class="inline-block animate-pulse-spark text-sm ml-0.5">😉</span>
         </h1>
       </div>
 
