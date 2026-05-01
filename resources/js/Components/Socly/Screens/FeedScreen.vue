@@ -1,111 +1,29 @@
 <script setup>
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { Play, Plus, Crown, Flame } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
 
-const stories = [
-  {
+const props = defineProps({
+  posts: { type: Array, default: () => [] },
+  stories: { type: Array, default: () => [] },
+})
+
+const page = usePage()
+const authUser = computed(() => page.props.auth?.user)
+
+const storiesWithOwn = computed(() => {
+  const own = {
     id: 0,
-    name: 'Vase story',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+    name: 'Vaše story',
+    avatar: authUser.value?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
     hasStory: false,
     isOwn: true,
-  },
-  {
-    id: 1,
-    name: 'Karolina',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
-    hasStory: true,
-    isLive: true,
-    isVIP: true,
-  },
-  {
-    id: 2,
-    name: 'Tereza',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=face',
-    hasStory: true,
-    isNew: true,
-  },
-  {
-    id: 3,
-    name: 'Nikola',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
-    hasStory: true,
-  },
-  {
-    id: 4,
-    name: 'Eliska',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-    hasStory: true,
-    isLive: true,
-  },
-  {
-    id: 5,
-    name: 'Adela',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop&crop=face',
-    hasStory: true,
-  },
-]
+  }
+  return [own, ...props.stories]
+})
 
-const feedData = [
-  {
-    id: 1,
-    creator: {
-      name: 'Karolina M.',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
-      verified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&h=750&fit=crop',
-    likes: 2847,
-    comments: 156,
-    isLocked: false,
-    caption: 'Novy exkluzivni obsah je tu! Dekuji za podporu...',
-    timeAgo: 'pred 2 hodinami',
-  },
-  {
-    id: 2,
-    creator: {
-      name: 'Tereza B.',
-      avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=face',
-      verified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&h=750&fit=crop',
-    likes: 5291,
-    comments: 312,
-    isLocked: true,
-    price: 150,
-    caption: 'Exkluzivni fotky z noveho shootu',
-    timeAgo: 'pred 5 hodinami',
-  },
-  {
-    id: 3,
-    creator: {
-      name: 'Nikola S.',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face',
-      verified: false,
-    },
-    image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&h=750&fit=crop',
-    likes: 1423,
-    comments: 89,
-    isLocked: false,
-    caption: 'Vikendova nalada',
-    timeAgo: 'pred 8 hodinami',
-  },
-  {
-    id: 4,
-    creator: {
-      name: 'Eliska V.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-      verified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=600&h=750&fit=crop',
-    likes: 8756,
-    comments: 445,
-    isLocked: true,
-    price: 200,
-    caption: 'Behind the scenes z nataceni',
-    timeAgo: 'pred 12 hodinami',
-  },
-]
+const feedData = computed(() => props.posts)
 </script>
 
 <template>
@@ -133,7 +51,7 @@ const feedData = [
       <!-- Stories Row -->
       <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2 -mx-4 px-4 lg:mx-0 lg:px-0 mb-6">
         <button 
-          v-for="story in stories" 
+          v-for="story in storiesWithOwn" 
           :key="story.id" 
           class="flex flex-col items-center gap-2 flex-shrink-0"
         >

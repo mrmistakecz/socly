@@ -1,6 +1,11 @@
 <script setup>
 import { Search, TrendingUp, Flame, Star, Crown, Lock, PlayCircle, BadgeCheck, Sparkles, ChevronRight, Users } from 'lucide-vue-next'
 
+defineProps({
+  topCreators: { type: Array, default: () => [] },
+  onOpenLive: { type: Function, default: null },
+})
+
 const emit = defineEmits(['openLive'])
 
 const categories = [

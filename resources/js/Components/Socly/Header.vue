@@ -1,8 +1,36 @@
 <script setup>
-import { ref } from 'vue'
-import { Bell, Sparkles, Search, Crown } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
+import { router } from '@inertiajs/vue3'
+import { Bell, Sparkles, Search, Crown, BadgeCheck } from 'lucide-vue-next'
+import axios from 'axios'
 
 const showSearch = ref(false)
+const searchQuery = ref('')
+const searchResults = ref([])
+
+let searchTimeout = null
+watch(searchQuery, (val) => {
+  clearTimeout(searchTimeout)
+  if (val.length < 2) {
+    searchResults.value = []
+    return
+  }
+  searchTimeout = setTimeout(async () => {
+    try {
+      const { data } = await axios.get('/api/search', { params: { q: val } })
+      searchResults.value = data.users || []
+    } catch (e) {
+      searchResults.value = []
+    }
+  }, 300)
+})
+
+const goToProfile = (id) => {
+  searchQuery.value = ''
+  searchResults.value = []
+  showSearch.value = false
+  router.visit(`/profile/${id}`)
+}
 </script>
 
 <template>
@@ -23,10 +51,29 @@ const showSearch = ref(false)
         <div class="relative w-full">
           <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            v-model="searchQuery"
             type="text"
             placeholder="Hledat tvurce, obsah..."
             class="w-full pl-10 pr-4 py-2.5 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
           />
+          <!-- Search Results Dropdown -->
+          <div v-if="searchResults.length" class="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-xl shadow-xl overflow-hidden z-50">
+            <button
+              v-for="user in searchResults"
+              :key="user.id"
+              @click="goToProfile(user.id)"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
+            >
+              <img :src="user.avatar || 'https://i.pravatar.cc/40'" class="w-9 h-9 rounded-xl object-cover" />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1">
+                  <span class="text-sm font-medium truncate">{{ user.name }}</span>
+                  <BadgeCheck v-if="user.verified" class="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                </div>
+                <p class="text-xs text-muted-foreground truncate">@{{ user.username }}</p>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -55,11 +102,30 @@ const showSearch = ref(false)
       <div class="relative">
         <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
+          v-model="searchQuery"
           type="text"
           placeholder="Hledat tvurce, obsah..."
           autofocus
           class="w-full pl-10 pr-4 py-2.5 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
         />
+        <!-- Mobile Search Results -->
+        <div v-if="searchResults.length" class="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-xl shadow-xl overflow-hidden z-50">
+          <button
+            v-for="user in searchResults"
+            :key="user.id"
+            @click="goToProfile(user.id)"
+            class="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
+          >
+            <img :src="user.avatar || 'https://i.pravatar.cc/40'" class="w-9 h-9 rounded-xl object-cover" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1">
+                <span class="text-sm font-medium truncate">{{ user.name }}</span>
+                <BadgeCheck v-if="user.verified" class="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              </div>
+              <p class="text-xs text-muted-foreground truncate">@{{ user.username }}</p>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </header>

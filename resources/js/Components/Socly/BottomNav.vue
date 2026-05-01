@@ -19,9 +19,7 @@ const navItems = [
 ]
 
 const handleTabChange = (tabId) => {
-  if (tabId !== 'add') {
-    emit('tabChange', tabId)
-  }
+  emit('tabChange', tabId)
 }
 </script>
 

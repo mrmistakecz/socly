@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { router } from '@inertiajs/vue3'
 import { Heart, MessageCircle, Share2, Bookmark, Lock, Sparkles, Eye, MoreHorizontal } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -12,6 +13,14 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  isLiked: {
+    type: Boolean,
+    default: false
+  },
+  isBookmarked: {
+    type: Boolean,
+    default: false
+  },
   price: {
     type: Number,
     default: 150
@@ -20,23 +29,36 @@ const props = defineProps({
   timeAgo: String
 })
 
-const isLiked = ref(false)
-const isBookmarked = ref(false)
+const liked = ref(props.isLiked)
+const bookmarked = ref(props.isBookmarked)
 const currentLikes = ref(props.likes)
 const showHeart = ref(false)
 
 const handleLike = () => {
-  isLiked.value = !isLiked.value
-  currentLikes.value = isLiked.value ? currentLikes.value + 1 : currentLikes.value - 1
+  liked.value = !liked.value
+  currentLikes.value = liked.value ? currentLikes.value + 1 : currentLikes.value - 1
+  router.post(`/posts/${props.id}/like`, {}, { preserveScroll: true, preserveState: true })
+}
+
+const handleBookmark = () => {
+  bookmarked.value = !bookmarked.value
+  router.post(`/posts/${props.id}/bookmark`, {}, { preserveScroll: true, preserveState: true })
 }
 
 const handleDoubleTap = () => {
-  if (!isLiked.value) {
-    isLiked.value = true
+  if (!liked.value) {
+    liked.value = true
     currentLikes.value++
+    router.post(`/posts/${props.id}/like`, {}, { preserveScroll: true, preserveState: true })
   }
   showHeart.value = true
   setTimeout(() => showHeart.value = false, 800)
+}
+
+const goToProfile = () => {
+  if (props.creator?.id) {
+    router.visit(`/profile/${props.creator.id}`)
+  }
 }
 </script>
 
@@ -44,7 +66,7 @@ const handleDoubleTap = () => {
   <article class="bg-card/50 border border-border/50 rounded-2xl overflow-hidden card-interactive">
     <!-- Creator Header -->
     <div class="flex items-center gap-3 p-4">
-      <button class="relative group">
+      <button class="relative group" @click="goToProfile">
         <div class="w-11 h-11 rounded-xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
           <img
             :src="creator.avatar"
@@ -115,10 +137,10 @@ const handleDoubleTap = () => {
             @click="handleLike"
             :class="[
               'flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
-              isLiked ? 'bg-destructive/10 text-destructive' : 'hover:bg-secondary/50 text-muted-foreground'
+              liked ? 'bg-destructive/10 text-destructive' : 'hover:bg-secondary/50 text-muted-foreground'
             ]"
           >
-            <Heart :class="['w-5 h-5 transition-transform', isLiked ? 'fill-current scale-110' : '']" />
+            <Heart :class="['w-5 h-5 transition-transform', liked ? 'fill-current scale-110' : '']" />
             <span class="text-sm font-medium">{{ currentLikes.toLocaleString() }}</span>
           </button>
           
@@ -133,13 +155,13 @@ const handleDoubleTap = () => {
         </div>
         
         <button 
-          @click="isBookmarked = !isBookmarked"
+          @click="handleBookmark"
           :class="[
             'p-2 rounded-lg transition-all',
-            isBookmarked ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/50 text-muted-foreground'
+            bookmarked ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/50 text-muted-foreground'
           ]"
         >
-          <Bookmark :class="['w-5 h-5', isBookmarked ? 'fill-current' : '']" />
+          <Bookmark :class="['w-5 h-5', bookmarked ? 'fill-current' : '']" />
         </button>
       </div>
 

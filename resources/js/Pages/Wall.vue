@@ -1,14 +1,23 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import FeedScreen from '@/Components/Socly/Screens/FeedScreen.vue'
 import DiscoverScreen from '@/Components/Socly/Screens/DiscoverScreen.vue'
 import MessagesScreen from '@/Components/Socly/Screens/MessagesScreen.vue'
-import ProfileScreen from '@/Components/Socly/Screens/ProfileScreen.vue'
 import LiveScreen from '@/Components/Socly/Screens/LiveScreen.vue'
+import CreatePostModal from '@/Components/Socly/CreatePostModal.vue'
 
+const props = defineProps({
+  posts: { type: Array, default: () => [] },
+  stories: { type: Array, default: () => [] },
+  topCreators: { type: Array, default: () => [] },
+})
+
+const page = usePage()
 const activeTab = ref('home')
 const showLive = ref(false)
+const showCreatePost = ref(false)
 
 const handleOpenLive = () => {
   showLive.value = true
@@ -19,6 +28,14 @@ const handleCloseLive = () => {
 }
 
 const handleTabChange = (tab) => {
+  if (tab === 'add') {
+    showCreatePost.value = true
+    return
+  }
+  if (tab === 'profile') {
+    router.visit('/profile')
+    return
+  }
   activeTab.value = tab
 }
 
@@ -30,26 +47,24 @@ const currentScreen = computed(() => {
       return DiscoverScreen
     case 'messages':
       return MessagesScreen
-    case 'profile':
-      return ProfileScreen
     default:
       return FeedScreen
   }
 })
 
 const screenProps = computed(() => {
-  if (activeTab.value === 'discover') {
-    return { onOpenLive: handleOpenLive }
+  if (activeTab.value === 'home') {
+    return { posts: props.posts, stories: props.stories }
   }
-  if (activeTab.value === 'profile') {
-    return { onBack: () => handleTabChange('home') }
+  if (activeTab.value === 'discover') {
+    return { onOpenLive: handleOpenLive, topCreators: props.topCreators }
   }
   return {}
 })
 </script>
 
 <template>
-  <AuthenticatedLayout title="Hlavní zeď">
+  <AuthenticatedLayout title="Hlavní zeď" @tab-change="handleTabChange">
     <template #default="{ activeTab: layoutTab, onOpenLive, onTabChange }">
       <component 
         :is="currentScreen" 
@@ -61,4 +76,10 @@ const screenProps = computed(() => {
       <LiveScreen @close="handleCloseLive" />
     </template>
   </AuthenticatedLayout>
+
+  <!-- Create Post Modal -->
+  <CreatePostModal 
+    v-if="showCreatePost" 
+    @close="showCreatePost = false" 
+  />
 </template>
