@@ -26,7 +26,7 @@ const submit = () => {
       <!-- Logo -->
       <div class="flex flex-col items-center mb-8">
         <h1 class="text-4xl font-black tracking-tight mb-2">
-          <span class="text-gradient-premium">SOCLY</span><span class="inline-block animate-pulse-spark text-lg ml-0.5">😉</span>
+          <span class="text-gradient-premium">SOCLY</span><sup class="text-[0.4em] text-primary animate-pulse-spark align-super font-bold">;)</sup>
         </h1>
         <p class="text-sm text-muted-foreground mt-1">Vítejte zpět</p>
       </div>
