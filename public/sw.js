@@ -2,8 +2,7 @@ const CACHE_NAME = 'socly-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/favicon.svg'
 ];
 
 // Install event - cache static assets
@@ -70,8 +69,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body,
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
     tag: data.tag || 'default',
     data: data.data || {},
     actions: data.actions || []

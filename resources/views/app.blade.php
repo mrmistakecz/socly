@@ -6,9 +6,12 @@
     <meta name="theme-color" content="#0f0f19">
     <meta name="color-scheme" content="dark">
     
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/apple-icon.png">
+    <link rel="apple-touch-icon" href="/favicon.svg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SOCLY">
