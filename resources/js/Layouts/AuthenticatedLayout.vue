@@ -85,11 +85,10 @@ const slots = defineSlots()
       
       <!-- Desktop Sidebar Navigation -->
       <nav class="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-card/30 border-r border-border/30 flex-col p-4 z-40">
-        <div class="flex items-center gap-3 px-4 py-6 mb-8">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-pink-500 to-accent flex items-center justify-center">
-            <span class="text-lg font-bold text-white">S</span>
-          </div>
-          <span class="text-xl font-bold text-gradient-premium">SOCLY</span>
+        <div class="flex items-center px-4 py-5 mb-4 border-b border-border/50">
+          <h1 class="text-2xl font-black tracking-tight">
+            <span class="text-gradient-premium">SOCLY</span><span class="inline-block text-primary animate-pulse-spark">'</span>
+          </h1>
         </div>
         
         <div class="space-y-2">

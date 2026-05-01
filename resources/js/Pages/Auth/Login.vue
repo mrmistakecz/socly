@@ -25,10 +25,9 @@ const submit = () => {
     <div class="w-full max-w-[400px]">
       <!-- Logo -->
       <div class="flex flex-col items-center mb-8">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-pink-500 to-accent flex items-center justify-center glow-primary mb-4">
-          <Sparkles class="w-8 h-8 text-white" />
-        </div>
-        <h1 class="text-2xl font-bold text-gradient-premium">SOCLY</h1>
+        <h1 class="text-4xl font-black tracking-tight mb-2">
+          <span class="text-gradient-premium">SOCLY</span><span class="inline-block text-primary animate-pulse-spark">'</span>
+        </h1>
         <p class="text-sm text-muted-foreground mt-1">Vítejte zpět</p>
       </div>
 

@@ -37,13 +37,10 @@ const goToProfile = (id) => {
   <header class="sticky top-0 z-50 glass-heavy pt-safe lg:hidden">
     <div class="flex items-center justify-between px-4 py-3">
       <!-- Logo -->
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-pink-500 to-accent flex items-center justify-center glow-primary">
-          <Sparkles class="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-gradient-premium">SOCLY</h1>
-        </div>
+      <div class="flex items-center">
+        <h1 class="text-2xl font-black tracking-tight">
+          <span class="text-gradient-premium">SOCLY</span><span class="inline-block text-primary animate-pulse-spark">'</span>
+        </h1>
       </div>
 
       <!-- Search - Tablet -->
