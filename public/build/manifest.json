@@ -1,0 +1,85 @@
+{
+  "_mail-CnfKr8Wa.js": {
+    "file": "assets/mail-CnfKr8Wa.js",
+    "name": "mail",
+    "imports": [
+      "_sparkles-DqK2qcWB.js"
+    ]
+  },
+  "_sparkles-DqK2qcWB.js": {
+    "file": "assets/sparkles-DqK2qcWB.js",
+    "name": "sparkles",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_user-6ixLpOaE.js": {
+    "file": "assets/user-6ixLpOaE.js",
+    "name": "user",
+    "imports": [
+      "_sparkles-DqK2qcWB.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CcHk1EpW.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/Pages/Auth/Login.vue": {
+    "file": "assets/Login-BgoPJe7n.js",
+    "name": "Login",
+    "src": "resources/js/Pages/Auth/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_sparkles-DqK2qcWB.js",
+      "_mail-CnfKr8Wa.js"
+    ],
+    "css": [
+      "assets/app-CcHk1EpW.css"
+    ]
+  },
+  "resources/js/Pages/Auth/Register.vue": {
+    "file": "assets/Register-BbXq_7YE.js",
+    "name": "Register",
+    "src": "resources/js/Pages/Auth/Register.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_sparkles-DqK2qcWB.js",
+      "_user-6ixLpOaE.js",
+      "_mail-CnfKr8Wa.js"
+    ],
+    "css": [
+      "assets/app-CcHk1EpW.css"
+    ]
+  },
+  "resources/js/Pages/Wall.vue": {
+    "file": "assets/Wall-qyN6YuQ_.js",
+    "name": "Wall",
+    "src": "resources/js/Pages/Wall.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_sparkles-DqK2qcWB.js",
+      "_user-6ixLpOaE.js"
+    ],
+    "css": [
+      "assets/app-CcHk1EpW.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-ilZE_3O9.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/Auth/Login.vue",
+      "resources/js/Pages/Auth/Register.vue",
+      "resources/js/Pages/Wall.vue"
+    ],
+    "css": [
+      "assets/app-CcHk1EpW.css"
+    ]
+  }
+}
