@@ -1,6 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, watch, computed } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
 import { Bell, Search, Crown, BadgeCheck } from 'lucide-vue-next'
 import axios from 'axios'
 
@@ -23,6 +23,13 @@ watch(searchQuery, (val) => {
       searchResults.value = []
     }
   }, 300)
+})
+
+const page = usePage()
+const user = computed(() => page.props.auth?.user)
+
+const props = defineProps({
+  notificationCount: { type: Number, default: 0 },
 })
 
 const goToProfile = (id) => {
@@ -85,10 +92,13 @@ const goToProfile = (id) => {
 
         <button class="relative p-2.5 rounded-xl bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all touch-active">
           <Bell class="w-5 h-5" />
-          <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" />
+          <span 
+            v-if="notificationCount > 0" 
+            class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" 
+          />
         </button>
 
-        <div class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-gold/20 to-amber-500/20 border border-gold/30">
+        <div v-if="user?.is_vip" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-gold/20 to-amber-500/20 border border-gold/30">
           <Crown class="w-4 h-4 text-gold" />
           <span class="text-xs font-semibold text-gold">VIP</span>
         </div>

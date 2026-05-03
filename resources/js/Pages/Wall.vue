@@ -19,9 +19,13 @@ const props = defineProps({
 })
 
 const page = usePage()
-const activeTab = ref('home')
+const urlParams = new URLSearchParams(window.location.search)
+const initialTab = urlParams.get('tab') || 'home'
+const initialChatId = urlParams.get('chat')
+const activeTab = ref(initialTab)
 const showLive = ref(false)
 const showCreatePost = ref(false)
+const pendingChatUserId = ref(initialChatId ? parseInt(initialChatId) : null)
 
 const { notifications, incomingMessage, postUpdates, dismissNotification } = useRealtime()
 
@@ -73,14 +77,14 @@ const screenProps = computed(() => {
     return { onOpenLive: handleOpenLive, topCreators: props.topCreators, trendingPosts: props.trendingPosts }
   }
   if (activeTab.value === 'messages') {
-    return { conversations: props.conversations }
+    return { conversations: props.conversations, pendingChatUserId: pendingChatUserId.value }
   }
   return {}
 })
 </script>
 
 <template>
-  <AuthenticatedLayout title="Hlavní zeď" @tab-change="handleTabChange">
+  <AuthenticatedLayout title="Hlavní zeď" :notification-count="notifications.length" @tab-change="handleTabChange">
     <template #default="{ activeTab: layoutTab, onOpenLive, onTabChange }">
       <component 
         :is="currentScreen" 

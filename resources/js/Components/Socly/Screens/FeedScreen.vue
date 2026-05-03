@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { usePage, router } from '@inertiajs/vue3'
 import { Play, Plus, Crown, Flame, Clock, ImageOff } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
 
@@ -26,6 +26,11 @@ const storiesWithOwn = computed(() => {
 
 const feedData = computed(() => props.posts)
 const activeFilter = ref('latest')
+
+const changeFilter = (filter) => {
+  activeFilter.value = filter
+  router.reload({ data: { sort: filter }, only: ['posts'], preserveScroll: true })
+}
 </script>
 
 <template>
@@ -39,14 +44,14 @@ const activeFilter = ref('latest')
         </div>
         <div class="flex items-center gap-2">
           <button 
-            @click="activeFilter = 'trending'"
+            @click="changeFilter('trending')"
             :class="['flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all', activeFilter === 'trending' ? 'bg-primary/10 text-primary' : 'bg-secondary/50 hover:bg-secondary text-muted-foreground']"
           >
             <Flame class="w-4 h-4" />
             Trendující
           </button>
           <button 
-            @click="activeFilter = 'latest'"
+            @click="changeFilter('latest')"
             :class="['flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all', activeFilter === 'latest' ? 'bg-primary/10 text-primary' : 'bg-secondary/50 hover:bg-secondary text-muted-foreground']"
           >
             <Clock class="w-4 h-4" />

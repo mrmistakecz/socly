@@ -1,15 +1,37 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send } from 'lucide-vue-next'
+import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send, ArrowLeft } from 'lucide-vue-next'
+import axios from 'axios'
 
 const props = defineProps({
   conversations: { type: Array, default: () => [] },
+  pendingChatUserId: { type: Number, default: null },
+})
+
+onMounted(() => {
+  if (props.pendingChatUserId) {
+    const conv = props.conversations.find(c => c.id === props.pendingChatUserId)
+    if (conv) {
+      openConversation(conv)
+    } else {
+      openConversation({
+        id: props.pendingChatUserId,
+        name: 'Nová konverzace',
+        username: '',
+        avatar: null,
+        verified: false,
+      })
+    }
+  }
 })
 
 const searchFilter = ref('')
 const selectedConv = ref(null)
+const chatMessages = ref([])
+const chatLoading = ref(false)
 const newMessage = ref('')
+const chatContainer = ref(null)
 
 const filteredConversations = computed(() => {
   if (!searchFilter.value) return props.conversations
@@ -21,22 +43,51 @@ const totalUnread = computed(() => props.conversations.reduce((sum, c) => sum + 
 
 const onlineConversations = computed(() => props.conversations.filter(c => c.isOnline))
 
-const openConversation = (conv) => {
+const openConversation = async (conv) => {
   selectedConv.value = conv
-  if (conv.unread > 0) {
-    router.post(`/messages/${conv.id}/read`, {}, { preserveScroll: true, preserveState: true })
+  chatLoading.value = true
+  try {
+    const { data } = await axios.get(`/messages/${conv.id}`)
+    chatMessages.value = data.messages || []
+    await nextTick()
+    scrollToBottom()
+  } catch { chatMessages.value = [] }
+  chatLoading.value = false
+}
+
+const closeChat = () => {
+  selectedConv.value = null
+  chatMessages.value = []
+  router.reload({ only: ['conversations'], preserveScroll: true })
+}
+
+const scrollToBottom = () => {
+  if (chatContainer.value) {
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   }
 }
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConv.value) return
+  const body = newMessage.value.trim()
+  newMessage.value = ''
+  
+  chatMessages.value.push({
+    id: Date.now(),
+    body,
+    isOwn: true,
+    time: new Date().toLocaleTimeString('cs', { hour: '2-digit', minute: '2-digit' }),
+    date: '',
+  })
+  await nextTick()
+  scrollToBottom()
+
   router.post('/messages', {
     receiver_id: selectedConv.value.id,
-    body: newMessage.value.trim(),
+    body,
   }, {
     preserveScroll: true,
     preserveState: true,
-    onSuccess: () => { newMessage.value = '' },
   })
 }
 </script>
@@ -250,21 +301,78 @@ const sendMessage = () => {
 
     </div>
 
-    <!-- Quick Reply Bar -->
-    <div v-if="selectedConv" class="fixed bottom-20 left-0 right-0 px-4 pb-4 z-30 lg:bottom-4 lg:left-[260px]">
-      <div class="glass-card rounded-2xl p-3 flex items-center gap-3 max-w-3xl mx-auto">
-        <img :src="selectedConv.avatar || '/images/default-avatar.svg'" class="w-8 h-8 rounded-lg object-cover" />
-        <input
-          v-model="newMessage"
-          type="text"
-          :placeholder="`Odpověď pro ${selectedConv.name}...`"
-          class="flex-1 bg-transparent text-sm outline-none placeholder-muted-foreground"
-          @keydown.enter="sendMessage"
-        />
-        <button @click="sendMessage" class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
-          <Send class="w-4 h-4" />
+    <!-- Chat View (Full Screen Overlay) -->
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="translate-x-0"
+      leave-to-class="translate-x-full"
+    >
+    <div v-if="selectedConv" class="fixed inset-0 z-50 bg-background flex flex-col lg:static lg:inset-auto lg:z-auto">
+      <!-- Chat Header -->
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+        <button @click="closeChat" class="p-2 rounded-xl hover:bg-secondary/50 transition-colors">
+          <ArrowLeft class="w-5 h-5" />
         </button>
+        <img :src="selectedConv.avatar || '/images/default-avatar.svg'" class="w-10 h-10 rounded-xl object-cover" />
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span class="font-semibold text-sm truncate">{{ selectedConv.name }}</span>
+            <BadgeCheck v-if="selectedConv.verified" class="w-4 h-4 text-primary fill-primary/20 flex-shrink-0" />
+          </div>
+          <p class="text-xs text-muted-foreground">@{{ selectedConv.username }}</p>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div ref="chatContainer" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 hide-scrollbar">
+        <div v-if="chatLoading" class="flex justify-center py-8">
+          <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+
+        <div v-if="!chatLoading && chatMessages.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+          <p class="text-sm text-muted-foreground">Zatím žádné zprávy. Napište první!</p>
+        </div>
+
+        <div 
+          v-for="msg in chatMessages" 
+          :key="msg.id"
+          :class="['flex', msg.isOwn ? 'justify-end' : 'justify-start']"
+        >
+          <div :class="[
+            'max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed',
+            msg.isOwn 
+              ? 'bg-primary text-white rounded-br-md' 
+              : 'bg-secondary/50 border border-border/30 rounded-bl-md'
+          ]">
+            <p>{{ msg.body }}</p>
+            <p :class="['text-[10px] mt-1', msg.isOwn ? 'text-white/60' : 'text-muted-foreground']">{{ msg.time }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="px-4 py-3 border-t border-border/50 bg-background pb-safe">
+        <div class="flex items-center gap-3">
+          <input
+            v-model="newMessage"
+            type="text"
+            :placeholder="`Napište zprávu...`"
+            class="flex-1 px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+            @keydown.enter="sendMessage"
+          />
+          <button 
+            @click="sendMessage" 
+            :disabled="!newMessage.trim()"
+            class="p-3 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all disabled:opacity-40"
+          >
+            <Send class="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
+    </Transition>
   </div>
 </template>

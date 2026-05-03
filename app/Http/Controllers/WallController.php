@@ -14,14 +14,21 @@ use Inertia\Inertia;
 
 class WallController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $sort = $request->get('sort', 'latest');
 
-        $posts = Post::with('user')
-            ->withCount(['likes', 'comments'])
-            ->latest()
-            ->limit(20)
+        $postsQuery = Post::with('user')
+            ->withCount(['likes', 'comments']);
+
+        if ($sort === 'trending') {
+            $postsQuery->orderByDesc('likes_count');
+        } else {
+            $postsQuery->latest();
+        }
+
+        $posts = $postsQuery->limit(20)
             ->get()
             ->map(function ($post) use ($user) {
                 return [
@@ -205,6 +212,29 @@ class WallController extends Controller
         }
 
         return back();
+    }
+
+    public function bookmarks()
+    {
+        $user = Auth::user();
+
+        $posts = $user->bookmarks()
+            ->with('post.user')
+            ->latest()
+            ->get()
+            ->map(function ($bm) {
+                $p = $bm->post;
+                if (!$p) return null;
+                return [
+                    'id' => $p->id,
+                    'image' => $p->image,
+                    'isLocked' => $p->is_locked,
+                    'isVideo' => $p->is_video,
+                    'likes' => $p->likes_count,
+                ];
+            })->filter()->values();
+
+        return response()->json(['posts' => $posts]);
     }
 
     private function formatNumber(int $num): string

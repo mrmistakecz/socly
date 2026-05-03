@@ -47,8 +47,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/users/{user}/follow', [FollowController::class, 'toggle'])->middleware('throttle:30,1')->name('users.follow');
 
     // Messages
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->middleware('throttle:60,1')->name('messages.show');
     Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
     Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->middleware('throttle:60,1')->name('messages.read');
+
+    // Bookmarks
+    Route::get('/api/bookmarks', [WallController::class, 'bookmarks'])->middleware('throttle:30,1')->name('bookmarks');
 
     // Search
     Route::get('/api/search', [SearchController::class, 'index'])->middleware('throttle:30,1')->name('search');

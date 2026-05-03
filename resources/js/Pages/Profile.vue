@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 import { MessageCircle, Lock, Grid3X3, PlayCircle, Bookmark, Settings, ChevronLeft, BadgeCheck, Share2, Heart, Crown, Sparkles, Edit3 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -33,10 +34,29 @@ const handleFollow = () => {
   router.post(`/users/${props.profileUser.id}/follow`, {}, { preserveScroll: true, preserveState: true })
 }
 
+const handleMessage = () => {
+  router.visit('/?tab=messages&chat=' + props.profileUser.id)
+}
+
+const savedPosts = ref([])
+const savedLoaded = ref(false)
+
 const filteredPosts = computed(() => {
   if (activeTab.value === 'videos') return props.posts.filter(p => p.isVideo)
+  if (activeTab.value === 'saved') return savedPosts.value
   return props.posts
 })
+
+const handleTabClick = async (tabId) => {
+  activeTab.value = tabId
+  if (tabId === 'saved' && !savedLoaded.value && props.isOwn) {
+    try {
+      const { data } = await axios.get('/api/bookmarks')
+      savedPosts.value = data.posts || []
+      savedLoaded.value = true
+    } catch { savedPosts.value = [] }
+  }
+}
 </script>
 
 <template>
@@ -137,7 +157,7 @@ const filteredPosts = computed(() => {
             >
               {{ following ? 'Sledujete' : 'Sledovat' }}
             </button>
-            <button class="px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+            <button @click="handleMessage" class="px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
               <MessageCircle class="w-5 h-5" />
             </button>
           </template>
@@ -198,7 +218,7 @@ const filteredPosts = computed(() => {
               {{ following ? 'Sledujete' : 'Sledovat' }}
             </span>
           </button>
-          <button class="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center">
+          <button @click="handleMessage" class="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center">
             <MessageCircle class="w-5 h-5" />
           </button>
         </template>
@@ -209,7 +229,7 @@ const filteredPosts = computed(() => {
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          @click="activeTab = tab.id"
+          @click="handleTabClick(tab.id)"
           :class="[
             'flex-1 py-4 flex items-center justify-center gap-2 transition-all relative',
             activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'

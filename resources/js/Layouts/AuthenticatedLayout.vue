@@ -10,6 +10,10 @@ const props = defineProps({
   title: {
     type: String,
     default: 'SOCLY'
+  },
+  notificationCount: {
+    type: Number,
+    default: 0,
   }
 })
 
@@ -156,6 +160,7 @@ const handleLogout = () => {
         <Header
           v-if="!showLive"
           class="sticky top-0 z-30 lg:hidden"
+          :notification-count="notificationCount"
         />
 
         <!-- Main Content Area -->

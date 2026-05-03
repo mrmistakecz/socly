@@ -84,9 +84,9 @@ const submit = () => {
               />
               <span class="text-sm text-muted-foreground">Zapamatovat si mě</span>
             </label>
-            <Link href="#" class="text-sm text-primary hover:text-primary/80">
+            <span class="text-sm text-muted-foreground/50 cursor-not-allowed" title="Brzy dostupné">
               Zapomněli jste heslo?
-            </Link>
+            </span>
           </div>
         </div>
 
