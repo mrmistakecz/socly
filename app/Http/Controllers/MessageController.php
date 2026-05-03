@@ -90,7 +90,7 @@ class MessageController extends Controller
           ->orderBy('created_at', 'asc')
           ->limit(100)
           ->get()
-          ->map(fn ($m) => {
+          ->map(function ($m) use ($me) {
               $mediaType = null;
               if ($m->media) {
                   if (str_contains($m->media, '.jpg') || str_contains($m->media, '.jpeg') || str_contains($m->media, '.png') || str_contains($m->media, '.gif')) {
