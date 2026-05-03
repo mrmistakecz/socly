@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import { Play, Plus, Crown, Flame } from 'lucide-vue-next'
+import { Play, Plus, Crown, Flame, Clock, ImageOff } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
 
 const props = defineProps({
@@ -24,6 +24,7 @@ const storiesWithOwn = computed(() => {
 })
 
 const feedData = computed(() => props.posts)
+const activeFilter = ref('latest')
 </script>
 
 <template>
@@ -32,16 +33,23 @@ const feedData = computed(() => props.posts)
     <div class="hidden lg:block sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 px-6 py-4">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Hlavni zed</h1>
-          <p class="text-sm text-muted-foreground">Obsah od tvurcu, ktere sledujes</p>
+          <h1 class="text-2xl font-bold">Hlavní zeď</h1>
+          <p class="text-sm text-muted-foreground">Obsah od tvůrců, které sleduješ</p>
         </div>
         <div class="flex items-center gap-2">
-          <button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary text-sm font-medium transition-colors">
-            <Flame class="w-4 h-4 text-primary" />
-            Trenduji
+          <button 
+            @click="activeFilter = 'trending'"
+            :class="['flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all', activeFilter === 'trending' ? 'bg-primary/10 text-primary' : 'bg-secondary/50 hover:bg-secondary text-muted-foreground']"
+          >
+            <Flame class="w-4 h-4" />
+            Trendující
           </button>
-          <button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary text-sm font-medium transition-colors">
-            Nejnovejsi
+          <button 
+            @click="activeFilter = 'latest'"
+            :class="['flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all', activeFilter === 'latest' ? 'bg-primary/10 text-primary' : 'bg-secondary/50 hover:bg-secondary text-muted-foreground']"
+          >
+            <Clock class="w-4 h-4" />
+            Nejnovější
           </button>
         </div>
       </div>
@@ -102,12 +110,21 @@ const feedData = computed(() => props.posts)
       <div class="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
 
       <!-- Feed - Responsive Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5 lg:gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5 lg:gap-6 max-w-7xl">
         <FeedCard 
           v-for="post in feedData" 
           :key="post.id" 
           v-bind="post" 
         />
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="feedData.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-20 h-20 rounded-3xl bg-secondary/50 flex items-center justify-center mb-5">
+          <ImageOff class="w-10 h-10 text-muted-foreground" />
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Zatím žádné příspěvky</h3>
+        <p class="text-sm text-muted-foreground max-w-xs">Začněte sledovat tvůrce, abyste viděli jejich obsah ve svém feedu</p>
       </div>
     </div>
   </div>

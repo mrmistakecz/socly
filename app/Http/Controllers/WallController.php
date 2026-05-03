@@ -111,8 +111,7 @@ class WallController extends Controller
         }
 
         $trendingPosts = Post::with('user')
-            ->withCount('likes')
-            ->orderByDesc('likes_count')
+            ->orderByDesc('posts.likes_count')
             ->limit(9)
             ->get()
             ->map(fn ($p) => [

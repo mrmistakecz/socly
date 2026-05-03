@@ -80,7 +80,7 @@ const goToProfile = () => {
 </script>
 
 <template>
-  <article class="bg-card/50 border border-border/50 rounded-2xl overflow-hidden card-interactive">
+  <article class="bg-card/50 border border-border/30 rounded-2xl overflow-hidden card-interactive">
     <!-- Creator Header -->
     <div class="flex items-center gap-3 p-4">
       <button class="relative group" @click="goToProfile">
@@ -157,11 +157,11 @@ const goToProfile = () => {
               liked ? 'bg-destructive/10 text-destructive' : 'hover:bg-secondary/50 text-muted-foreground'
             ]"
           >
-            <Heart :class="['w-5 h-5 transition-transform', liked ? 'fill-current scale-110' : '']" />
+            <Heart :class="['w-5 h-5 transition-all duration-200', liked ? 'fill-current scale-110' : 'hover:scale-105']" />
             <span class="text-sm font-medium">{{ currentLikes.toLocaleString() }}</span>
           </button>
           
-          <button @click="showComments = !showComments" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">
+          <button @click="showComments = !showComments" :class="['flex items-center gap-2 px-3 py-2 rounded-lg transition-all', showComments ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/50 text-muted-foreground']">
             <MessageCircle class="w-5 h-5" />
             <span class="text-sm font-medium">{{ comments }}</span>
           </button>
@@ -188,6 +188,7 @@ const goToProfile = () => {
       </p>
 
       <!-- Comment Input -->
+      <Transition name="slide">
       <div v-if="showComments" class="mt-3 flex items-center gap-2">
         <input
           v-model="commentText"
@@ -204,6 +205,17 @@ const goToProfile = () => {
           Odeslat
         </button>
       </div>
+      </Transition>
     </div>
   </article>
 </template>
+
+<style scoped>
+.slide-enter-active, .slide-leave-active {
+  transition: all 0.2s ease;
+}
+.slide-enter-from, .slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>

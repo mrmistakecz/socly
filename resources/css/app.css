@@ -49,11 +49,26 @@
   }
   
   .glass-heavy {
-    @apply bg-background/80 backdrop-blur-2xl border-b border-border/50;
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    @apply border-b border-border/40;
   }
   
   .glass-card {
     @apply bg-secondary/30 backdrop-blur-lg border border-border/30 rounded-2xl;
+  }
+
+  .glass-sidebar {
+    background: hsl(var(--card) / 0.50);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+  }
+
+  .glass-nav {
+    background: hsl(var(--background) / 0.65);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
   }
   
   /* Glow Effects */
@@ -209,6 +224,31 @@
   /* Touch feedback */
   .touch-active {
     @apply active:scale-95 transition-transform;
+  }
+
+  .touch-feedback {
+    @apply active:scale-[0.97] transition-transform duration-150;
+  }
+
+  /* Sidebar active indicator */
+  .nav-item-active {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--accent) / 0.08));
+    border-left: 3px solid hsl(var(--primary));
+  }
+
+  /* Smooth page transitions */
+  .page-enter-active {
+    animation: pageFadeIn 0.25s ease-out;
+  }
+
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Focus visible ring for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
   
   /* Neon glow for gold text */

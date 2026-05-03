@@ -13,7 +13,7 @@ class PostController extends Controller
     {
         $validated = $request->validate([
             'caption' => ['nullable', 'string', 'max:2000'],
-            'image' => ['required', 'image', 'max:10240'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
             'is_locked' => ['boolean'],
             'price' => ['nullable', 'integer', 'min:0'],
         ], [
