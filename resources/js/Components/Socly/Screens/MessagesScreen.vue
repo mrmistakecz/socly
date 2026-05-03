@@ -112,7 +112,7 @@ const sendMessage = () => {
               :style="{ zIndex: 3 - i }"
             >
               <img
-                :src="conv.avatar"
+                :src="conv.avatar || '/images/default-avatar.svg'"
                 alt=""
                 class="w-full h-full object-cover"
               />
@@ -151,7 +151,7 @@ const sendMessage = () => {
               <div class="w-full h-full rounded-full overflow-hidden bg-background p-[2px]">
                 <div class="w-full h-full rounded-full overflow-hidden">
                   <img
-                    :src="conv.avatar"
+                    :src="conv.avatar || '/images/default-avatar.svg'"
                     :alt="conv.name"
                     class="w-full h-full object-cover"
                   />
@@ -190,7 +190,7 @@ const sendMessage = () => {
               <div class="w-full h-full rounded-xl overflow-hidden bg-background p-[1px]">
                 <div class="w-full h-full rounded-xl overflow-hidden">
                   <img
-                    :src="conv.avatar"
+                    :src="conv.avatar || '/images/default-avatar.svg'"
                     :alt="conv.name"
                     class="w-full h-full object-cover"
                   />
@@ -253,7 +253,7 @@ const sendMessage = () => {
     <!-- Quick Reply Bar -->
     <div v-if="selectedConv" class="fixed bottom-20 left-0 right-0 px-4 pb-4 z-30 lg:bottom-4 lg:left-[260px]">
       <div class="glass-card rounded-2xl p-3 flex items-center gap-3 max-w-3xl mx-auto">
-        <img :src="selectedConv.avatar" class="w-8 h-8 rounded-lg object-cover" />
+        <img :src="selectedConv.avatar || '/images/default-avatar.svg'" class="w-8 h-8 rounded-lg object-cover" />
         <input
           v-model="newMessage"
           type="text"

@@ -76,20 +76,24 @@ class ProfileController extends Controller
             'cover_image.max' => 'Cover fotka může mít maximálně 4 MB.',
         ]);
 
+        $disk = config('filesystems.default');
+
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
+            if ($user->avatar) {
+                $this->deleteOldFile($user->avatar, $disk);
             }
-            $validated['avatar'] = '/storage/' . $request->file('avatar')->store('avatars', 'public');
+            $path = $request->file('avatar')->store('avatars', $disk);
+            $validated['avatar'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['avatar']);
         }
 
         if ($request->hasFile('cover_image')) {
-            if ($user->cover_image && str_starts_with($user->cover_image, '/storage/')) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $user->cover_image));
+            if ($user->cover_image) {
+                $this->deleteOldFile($user->cover_image, $disk);
             }
-            $validated['cover_image'] = '/storage/' . $request->file('cover_image')->store('covers', 'public');
+            $path = $request->file('cover_image')->store('covers', $disk);
+            $validated['cover_image'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['cover_image']);
         }
@@ -104,5 +108,15 @@ class ProfileController extends Controller
         return Inertia::render('Settings', [
             'user' => Auth::user(),
         ]);
+    }
+
+    private function deleteOldFile(string $url, string $disk): void
+    {
+        if (str_starts_with($url, '/storage/')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $url));
+        } elseif (str_starts_with($url, 'http')) {
+            $key = parse_url($url, PHP_URL_PATH);
+            if ($key) Storage::disk($disk)->delete(ltrim($key, '/'));
+        }
     }
 }

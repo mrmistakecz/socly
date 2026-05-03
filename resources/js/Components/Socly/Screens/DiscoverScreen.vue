@@ -152,7 +152,7 @@ const goToProfile = (id) => {
               ]">
                 <div class="w-full h-full rounded-xl overflow-hidden bg-background p-[1px]">
                   <img
-                    :src="creator.avatar"
+                    :src="creator.avatar || '/images/default-avatar.svg'"
                     :alt="creator.name"
                     class="w-full h-full rounded-xl object-cover"
                   />

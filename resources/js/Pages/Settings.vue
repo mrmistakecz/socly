@@ -167,33 +167,19 @@ const menuItems = [
       <!-- Notifications Settings -->
       <div v-if="activeSection === 'notifications'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Oznámení</h3>
-        <div v-for="item in ['Nové zprávy', 'Nový odběratel', 'Líbí se', 'Komentáře', 'Živé vysílání']" :key="item" class="flex items-center justify-between py-3">
-          <span class="text-sm">{{ item }}</span>
-          <button class="relative w-12 h-7 rounded-full bg-primary transition-colors">
-            <span class="absolute top-0.5 translate-x-5 w-6 h-6 rounded-full bg-white shadow transition-transform" />
-          </button>
-        </div>
+        <p class="text-sm text-muted-foreground">Nastavení notifikací bude brzy dostupné.</p>
       </div>
 
       <!-- Privacy Settings -->
       <div v-if="activeSection === 'privacy'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Soukromí</h3>
-        <div v-for="item in ['Veřejný profil', 'Zobrazit online stav', 'Povolit zprávy od všech']" :key="item" class="flex items-center justify-between py-3">
-          <span class="text-sm">{{ item }}</span>
-          <button class="relative w-12 h-7 rounded-full bg-primary transition-colors">
-            <span class="absolute top-0.5 translate-x-5 w-6 h-6 rounded-full bg-white shadow transition-transform" />
-          </button>
-        </div>
+        <p class="text-sm text-muted-foreground">Nastavení soukromí bude brzy dostupné.</p>
       </div>
 
       <!-- Appearance Settings -->
       <div v-if="activeSection === 'appearance'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Vzhled</h3>
-        <p class="text-sm text-muted-foreground">Tmavý motiv je aktuálně aktivní.</p>
-        <div class="flex gap-3 mt-3">
-          <button class="flex-1 py-3 rounded-xl bg-primary/10 border border-primary/30 text-sm font-medium text-primary">Tmavý</button>
-          <button class="flex-1 py-3 rounded-xl bg-secondary/50 border border-border/50 text-sm font-medium text-muted-foreground">Světlý</button>
-        </div>
+        <p class="text-sm text-muted-foreground">Tmavý motiv je aktivní. Další motivy budou brzy dostupné.</p>
       </div>
 
       <!-- Logout -->

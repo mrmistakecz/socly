@@ -74,7 +74,7 @@ const activeFilter = ref('latest')
             ]">
               <div class="w-full h-full rounded-full overflow-hidden bg-background p-[2px]">
                 <img
-                  :src="story.avatar"
+                  :src="story.avatar || '/images/default-avatar.svg'"
                   :alt="story.name"
                   class="w-full h-full rounded-full object-cover"
                 />

@@ -23,12 +23,17 @@ class PostController extends Controller
             'image.max' => 'Obrázek může mít maximálně 10 MB.',
         ]);
 
-        $path = $request->file('image')->store('posts', 'public');
+        $disk = config('filesystems.default');
+        $path = $request->file('image')->store('posts', $disk);
+
+        $imageUrl = $disk === 'public'
+            ? '/storage/' . $path
+            : Storage::disk($disk)->url($path);
 
         Post::create([
             'user_id' => Auth::id(),
             'caption' => $validated['caption'] ?? null,
-            'image' => '/storage/' . $path,
+            'image' => $imageUrl,
             'is_locked' => $validated['is_locked'] ?? false,
             'price' => $validated['price'] ?? null,
         ]);
@@ -42,8 +47,14 @@ class PostController extends Controller
             abort(403);
         }
 
-        if ($post->image && str_starts_with($post->image, '/storage/')) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $post->image));
+        if ($post->image) {
+            $disk = config('filesystems.default');
+            if (str_starts_with($post->image, '/storage/')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $post->image));
+            } else {
+                $key = parse_url($post->image, PHP_URL_PATH);
+                if ($key) Storage::disk($disk)->delete(ltrim($key, '/'));
+            }
         }
 
         $post->delete();

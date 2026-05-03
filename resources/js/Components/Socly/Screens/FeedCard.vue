@@ -94,7 +94,7 @@ const goToProfile = () => {
       <button class="relative group" @click="goToProfile">
         <div class="w-11 h-11 rounded-xl overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
           <img
-            :src="creator.avatar"
+            :src="creator.avatar || '/images/default-avatar.svg'"
             :alt="creator.name"
             class="w-full h-full object-cover"
           />
