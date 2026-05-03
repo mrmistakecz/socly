@@ -47,23 +47,21 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_verified' => 'boolean',
-            'is_vip' => 'boolean',
-            'is_creator' => 'boolean',
-            'is_admin' => 'boolean',
-            'date_of_birth' => 'date',
-            'terms_accepted_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_verified' => 'boolean',
+        'is_vip' => 'boolean',
+        'is_creator' => 'boolean',
+        'is_admin' => 'boolean',
+        'date_of_birth' => 'date',
+        'terms_accepted_at' => 'datetime',
+        'last_seen_at' => 'datetime',
+    ];
 
     // --- Relationships ---
 

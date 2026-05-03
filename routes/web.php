@@ -49,7 +49,12 @@ Route::middleware('auth')->group(function () {
     // Messages
     Route::get('/messages/{user}', [MessageController::class, 'show'])->middleware('throttle:60,1')->name('messages.show');
     Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
+    Route::post('/messages/upload', [MessageController::class, 'upload'])->middleware('throttle:10,1')->name('messages.upload');
     Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->middleware('throttle:60,1')->name('messages.read');
+    Route::put('/messages/{message}', [MessageController::class, 'update'])->middleware('throttle:30,1')->name('messages.update');
+    Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->middleware('throttle:30,1')->name('messages.destroy');
+    Route::post('/messages/{message}/react', [MessageController::class, 'addReaction'])->middleware('throttle:30,1')->name('messages.react');
+    Route::delete('/messages/{message}/react', [MessageController::class, 'removeReaction'])->middleware('throttle:30,1')->name('messages.unreact');
 
     // Bookmarks
     Route::get('/api/bookmarks', [WallController::class, 'bookmarks'])->middleware('throttle:30,1')->name('bookmarks');
