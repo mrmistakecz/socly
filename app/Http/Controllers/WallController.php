@@ -19,9 +19,7 @@ class WallController extends Controller
         $user = Auth::user();
         $sort = $request->get('sort', 'latest');
 
-        $postsQuery = Post::with(['user', 'comments' => function ($q) {
-                $q->with('user')->latest()->limit(5);
-            }])
+        $postsQuery = Post::with(['user', 'comments.user'])
             ->withCount(['likes', 'comments']);
 
         if ($sort === 'trending') {
@@ -52,7 +50,7 @@ class WallController extends Controller
                     'timeAgo' => $post->created_at->locale('cs')->diffForHumans(),
                     'isLiked' => $user ? $user->hasLiked($post) : false,
                     'isBookmarked' => $user ? $user->hasBookmarked($post) : false,
-                    'recentComments' => $post->comments->map(fn ($c) => [
+                    'recentComments' => $post->comments->sortByDesc('created_at')->take(5)->map(fn ($c) => [
                         'id' => $c->id,
                         'body' => $c->body,
                         'user' => [
@@ -160,9 +158,7 @@ class WallController extends Controller
         $page = (int) $request->get('page', 1);
         $limit = 20;
 
-        $postsQuery = Post::with(['user', 'comments' => function ($q) {
-                $q->with('user')->latest()->limit(5);
-            }])
+        $postsQuery = Post::with(['user', 'comments.user'])
             ->withCount(['likes', 'comments']);
 
         if ($sort === 'trending') {
@@ -195,7 +191,7 @@ class WallController extends Controller
                     'timeAgo' => $post->created_at->locale('cs')->diffForHumans(),
                     'isLiked' => $user ? $user->hasLiked($post) : false,
                     'isBookmarked' => $user ? $user->hasBookmarked($post) : false,
-                    'recentComments' => $post->comments->map(fn ($c) => [
+                    'recentComments' => $post->comments->sortByDesc('created_at')->take(5)->map(fn ($c) => [
                         'id' => $c->id,
                         'body' => $c->body,
                         'user' => [

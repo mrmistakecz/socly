@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { Play, Plus, Crown, Flame, Clock, ImageOff, Bell } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
@@ -67,7 +67,6 @@ const loadMore = async () => {
 }
 
 // Setup intersection observer for infinite scroll
-import { onMounted, onUnmounted } from 'vue'
 
 const loadMoreTrigger = ref(null)
 let observer = null
