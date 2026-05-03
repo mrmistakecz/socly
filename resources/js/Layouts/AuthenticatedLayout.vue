@@ -11,13 +11,13 @@ const props = defineProps({
     type: String,
     default: 'SOCLY'
   },
-  notificationCount: {
-    type: Number,
-    default: 0,
+  notifications: {
+    type: Array,
+    default: () => [],
   }
 })
 
-const emit = defineEmits(['tabChange'])
+const emit = defineEmits(['tabChange', 'clear-notifications'])
 
 const page = usePage()
 const authUser = computed(() => page.props.auth?.user)
@@ -168,7 +168,8 @@ const handleLogout = () => {
         <Header
           v-if="!showLive"
           class="sticky top-0 z-30 lg:hidden"
-          :notification-count="notificationCount"
+          :notifications="notifications"
+          @clear-notifications="emit('clear-notifications')"
         />
 
         <!-- Main Content Area -->

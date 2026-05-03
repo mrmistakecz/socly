@@ -77,14 +77,14 @@ const screenProps = computed(() => {
     return { onOpenLive: handleOpenLive, topCreators: props.topCreators, trendingPosts: props.trendingPosts }
   }
   if (activeTab.value === 'messages') {
-    return { conversations: props.conversations, pendingChatUserId: pendingChatUserId.value }
+    return { conversations: props.conversations, pendingChatUserId: pendingChatUserId.value, incomingMessage: incomingMessage.value }
   }
   return {}
 })
 </script>
 
 <template>
-  <AuthenticatedLayout title="Hlavní zeď" :notification-count="notifications.length" @tab-change="handleTabChange">
+  <AuthenticatedLayout title="Hlavní zeď" :notifications="notifications" @tab-change="handleTabChange" @clear-notifications="clearNotifications">
     <template #default="{ activeTab: layoutTab, onOpenLive, onTabChange }">
       <component 
         :is="currentScreen" 

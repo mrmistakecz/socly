@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
-import { Play, Plus, Crown, Flame, Clock, ImageOff } from 'lucide-vue-next'
+import { Play, Plus, Crown, Flame, Clock, ImageOff, Bell } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
 
 const props = defineProps({
@@ -24,13 +24,71 @@ const storiesWithOwn = computed(() => {
   return [own, ...props.stories]
 })
 
-const feedData = computed(() => props.posts)
+const feedData = ref([...props.posts])
 const activeFilter = ref('latest')
+const isLoadingMore = ref(false)
+const hasMore = ref(props.posts.length === 20)
+let pageCount = 1
+
+// Watch for initial posts prop change (when filter changes via Inertia)
+watch(() => props.posts, (newPosts) => {
+  feedData.value = [...newPosts]
+  hasMore.value = newPosts.length === 20
+  pageCount = 1
+})
 
 const changeFilter = (filter) => {
   activeFilter.value = filter
   router.reload({ data: { sort: filter }, only: ['posts'], preserveScroll: true })
 }
+
+const loadMore = async () => {
+  if (isLoadingMore.value || !hasMore.value) return
+  
+  isLoadingMore.value = true
+  pageCount++
+  
+  try {
+    const { data } = await axios.get('/api/posts', {
+      params: { sort: activeFilter.value, page: pageCount }
+    })
+    
+    if (data.posts && data.posts.length) {
+      feedData.value.push(...data.posts)
+      hasMore.value = data.posts.length === 20
+    } else {
+      hasMore.value = false
+    }
+  } catch (e) {
+    pageCount--
+  }
+  
+  isLoadingMore.value = false
+}
+
+// Setup intersection observer for infinite scroll
+import { onMounted, onUnmounted } from 'vue'
+
+const loadMoreTrigger = ref(null)
+let observer = null
+
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && hasMore.value && !isLoadingMore.value) {
+      loadMore()
+    }
+  }, { rootMargin: '400px' })
+  
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer && loadMoreTrigger.value) {
+    observer.unobserve(loadMoreTrigger.value)
+  }
+})
 </script>
 
 <template>
@@ -67,7 +125,8 @@ const changeFilter = (filter) => {
         <button 
           v-for="story in storiesWithOwn" 
           :key="story.id" 
-          class="flex flex-col items-center gap-2 flex-shrink-0"
+          @click="handleStoryClick"
+          class="flex flex-col items-center gap-2 flex-shrink-0 transition-transform active:scale-95"
         >
           <div class="relative">
             <div :class="[
@@ -125,6 +184,11 @@ const changeFilter = (filter) => {
         />
       </div>
 
+      <!-- Loading Trigger -->
+      <div v-if="hasMore" ref="loadMoreTrigger" class="flex justify-center py-8">
+        <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
       <!-- Empty State -->
       <div v-if="feedData.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
         <div class="w-20 h-20 rounded-3xl bg-secondary/50 flex items-center justify-center mb-5">
@@ -134,5 +198,23 @@ const changeFilter = (filter) => {
         <p class="text-sm text-muted-foreground max-w-xs">Začněte sledovat tvůrce, abyste viděli jejich obsah ve svém feedu</p>
       </div>
     </div>
+    
+    <!-- Story Coming Soon Toast -->
+    <Transition name="slide-up">
+      <div v-if="showStoryToast" class="fixed bottom-24 lg:bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-card/90 backdrop-blur-md border border-border/50 shadow-xl z-50 flex items-center gap-3">
+        <Crown class="w-5 h-5 text-gold" />
+        <p class="text-sm font-medium">Stories budou dostupné brzy!</p>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-up-enter-from, .slide-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 20px);
+}
+</style>

@@ -54,6 +54,12 @@ Route::middleware('auth')->group(function () {
     // Bookmarks
     Route::get('/api/bookmarks', [WallController::class, 'bookmarks'])->middleware('throttle:30,1')->name('bookmarks');
 
+    // Feed / Posts API
+    Route::get('/api/posts', [WallController::class, 'postsApi'])->middleware('throttle:60,1')->name('posts.api');
+
+    // Discover
+    Route::get('/api/discover', [WallController::class, 'discover'])->middleware('throttle:30,1')->name('discover');
+
     // Search
     Route::get('/api/search', [SearchController::class, 'index'])->middleware('throttle:30,1')->name('search');
 });

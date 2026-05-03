@@ -1,7 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { Heart, MessageCircle, Share2, Bookmark, Lock, Sparkles, Eye, MoreHorizontal } from 'lucide-vue-next'
+import { Heart, MessageCircle, Share2, Bookmark, Lock, Sparkles, Eye, MoreHorizontal, Trash2, Check } from 'lucide-vue-next'
+import { usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
   id: Number,
@@ -28,7 +29,11 @@ const props = defineProps({
   caption: String,
   timeAgo: String,
   realtimeUpdate: { type: Object, default: null },
+  recentComments: { type: Array, default: () => [] },
 })
+
+const page = usePage()
+const isOwnPost = props.creator?.id === page.props.auth?.user?.id
 
 const liked = ref(props.isLiked)
 const bookmarked = ref(props.isBookmarked)
@@ -38,6 +43,8 @@ const showComments = ref(false)
 const commentText = ref('')
 const commenting = ref(false)
 const currentComments = ref(props.comments)
+const localComments = ref([...props.recentComments])
+const copied = ref(false)
 
 watch(() => props.realtimeUpdate, (update) => {
   if (!update) return
@@ -48,10 +55,18 @@ watch(() => props.realtimeUpdate, (update) => {
 const handleComment = () => {
   if (!commentText.value.trim() || commenting.value) return
   commenting.value = true
-  router.post(`/posts/${props.id}/comment`, { body: commentText.value.trim() }, {
+  const body = commentText.value.trim()
+  router.post(`/posts/${props.id}/comment`, { body }, {
     preserveScroll: true,
     preserveState: true,
     onSuccess: () => {
+      localComments.value.unshift({
+        id: Date.now(),
+        body,
+        user: { name: page.props.auth?.user?.name, avatar: page.props.auth?.user?.avatar },
+        timeAgo: 'právě teď',
+      })
+      currentComments.value++
       commentText.value = ''
       commenting.value = false
     },
@@ -85,6 +100,20 @@ const goToProfile = () => {
     router.visit(`/profile/${props.creator.id}`)
   }
 }
+
+const handleShare = async () => {
+  const url = `${window.location.origin}/profile/${props.creator?.id}`
+  try {
+    await navigator.clipboard.writeText(url)
+    copied.value = true
+    setTimeout(() => copied.value = false, 2000)
+  } catch {}
+}
+
+const handleDelete = () => {
+  if (!confirm('Opravdu chcete smazat tento příspěvek?')) return
+  router.delete(`/posts/${props.id}`, { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -111,8 +140,8 @@ const goToProfile = () => {
         <p class="text-xs text-muted-foreground">{{ timeAgo }}</p>
       </div>
       
-      <button class="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-        <MoreHorizontal class="w-5 h-5 text-muted-foreground" />
+      <button v-if="isOwnPost" @click="handleDelete" class="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground" title="Smazat">
+        <Trash2 class="w-4 h-4" />
       </button>
     </div>
 
@@ -174,8 +203,9 @@ const goToProfile = () => {
             <span class="text-sm font-medium">{{ currentComments }}</span>
           </button>
           
-          <button class="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">
-            <Share2 class="w-5 h-5" />
+          <button @click="handleShare" class="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">
+            <Check v-if="copied" class="w-5 h-5 text-green-500" />
+            <Share2 v-else class="w-5 h-5" />
           </button>
         </div>
         
@@ -195,23 +225,37 @@ const goToProfile = () => {
         <span class="text-muted-foreground">{{ caption }}</span>
       </p>
 
-      <!-- Comment Input -->
+      <!-- Comments Section -->
       <Transition name="slide">
-      <div v-if="showComments" class="mt-3 flex items-center gap-2">
-        <input
-          v-model="commentText"
-          type="text"
-          placeholder="Napsat komentář..."
-          class="flex-1 px-3 py-2 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
-          @keydown.enter="handleComment"
-        />
-        <button
-          @click="handleComment"
-          :disabled="!commentText.trim() || commenting"
-          class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary hover:text-white transition-all disabled:opacity-50"
-        >
-          Odeslat
-        </button>
+      <div v-if="showComments" class="mt-3 space-y-3">
+        <!-- Comment List -->
+        <div v-if="localComments.length" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
+          <div v-for="c in localComments" :key="c.id" class="flex items-start gap-2">
+            <img :src="c.user?.avatar || '/images/default-avatar.svg'" class="w-7 h-7 rounded-lg object-cover flex-shrink-0 mt-0.5" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm"><span class="font-semibold mr-1">{{ c.user?.name }}</span><span class="text-muted-foreground">{{ c.body }}</span></p>
+              <p class="text-[10px] text-muted-foreground">{{ c.timeAgo }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comment Input -->
+        <div class="flex items-center gap-2">
+          <input
+            v-model="commentText"
+            type="text"
+            placeholder="Napsat komentář..."
+            class="flex-1 px-3 py-2 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+            @keydown.enter="handleComment"
+          />
+          <button
+            @click="handleComment"
+            :disabled="!commentText.trim() || commenting"
+            class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary hover:text-white transition-all disabled:opacity-50"
+          >
+            Odeslat
+          </button>
+        </div>
       </div>
       </Transition>
     </div>

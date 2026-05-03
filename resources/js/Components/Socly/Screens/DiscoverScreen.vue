@@ -14,6 +14,18 @@ const emit = defineEmits(['openLive'])
 const activeCategory = ref('all')
 const searchQuery = ref('')
 const searchResults = ref([])
+const filteredPosts = ref([...props.trendingPosts])
+const loadingCategory = ref(false)
+
+const changeCategory = async (catId) => {
+  activeCategory.value = catId
+  loadingCategory.value = true
+  try {
+    const { data } = await axios.get('/api/discover', { params: { category: catId } })
+    filteredPosts.value = data.posts || []
+  } catch { filteredPosts.value = [...props.trendingPosts] }
+  loadingCategory.value = false
+}
 
 const categories = [
   { id: 'all', label: 'Vše', icon: Sparkles },
@@ -102,7 +114,7 @@ const goToProfile = (id) => {
         <button
           v-for="cat in categories"
           :key="cat.id"
-          @click="activeCategory = cat.id"
+          @click="changeCategory(cat.id)"
           :class="[
             'flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all',
             activeCategory === cat.id 
@@ -183,12 +195,12 @@ const goToProfile = (id) => {
       </div>
 
       <!-- Trending Posts Grid -->
-      <div v-if="trendingPosts.length">
+      <div v-if="filteredPosts.length">
         <h2 class="text-lg font-bold mb-4">Objevte</h2>
         
         <div class="grid grid-cols-2 lg:grid-cols-3 auto-rows-[140px] lg:auto-rows-[180px] gap-2">
           <button 
-            v-for="(item, idx) in trendingPosts" 
+            v-for="(item, idx) in filteredPosts" 
             :key="item.id" 
             :class="['relative rounded-2xl overflow-hidden bg-secondary/20 group', idx % 3 === 0 ? 'col-span-1 row-span-2' : 'col-span-1 row-span-1']"
             @click="goToProfile(item.creator?.id)"

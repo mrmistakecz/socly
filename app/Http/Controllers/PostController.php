@@ -38,7 +38,7 @@ class PostController extends Controller
             'price' => $validated['price'] ?? null,
         ]);
 
-        return back()->with('success', 'Příspěvek byl vytvořen!');
+        return redirect('/?tab=home')->with('success', 'Příspěvek byl vytvořen!');
     }
 
     public function destroy(Post $post)

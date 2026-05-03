@@ -14,6 +14,7 @@ const form = useForm({
 })
 
 const avatarPreview = ref(user.avatar)
+const coverPreview = ref(user.cover_image)
 const activeSection = ref('profile')
 
 const handleAvatarChange = (e) => {
@@ -21,6 +22,14 @@ const handleAvatarChange = (e) => {
   if (file) {
     form.avatar = file
     avatarPreview.value = URL.createObjectURL(file)
+  }
+}
+
+const handleCoverChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    form.cover_image = file
+    coverPreview.value = URL.createObjectURL(file)
   }
 }
 
@@ -62,26 +71,38 @@ const menuItems = [
 
     <div class="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <!-- Profile Header -->
-      <div class="flex items-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/50">
-        <div class="relative">
-          <div class="w-16 h-16 rounded-2xl overflow-hidden bg-secondary">
-            <img 
-              :src="avatarPreview || user.avatar || '/images/default-avatar.svg'" 
-              class="w-full h-full object-cover" 
-            />
-          </div>
-          <label class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center cursor-pointer border-2 border-background">
-            <Camera class="w-3.5 h-3.5 text-white" />
-            <input type="file" accept="image/*" @change="handleAvatarChange" class="hidden" />
+      <div class="flex items-center gap-4 p-4 rounded-2xl bg-card/50 border border-border/50 relative overflow-hidden">
+        <!-- Cover Photo Preview -->
+        <div class="absolute inset-0 z-0">
+          <img :src="coverPreview || user.cover_image || '/images/default-cover.svg'" class="w-full h-full object-cover opacity-30" />
+          <label class="absolute top-2 right-2 px-3 py-1.5 bg-black/50 text-white rounded-lg flex items-center gap-2 cursor-pointer text-xs font-medium hover:bg-black/70 transition-all z-10 backdrop-blur-md">
+            <Camera class="w-3.5 h-3.5" />
+            Změnit pozadí
+            <input type="file" accept="image/*" @change="handleCoverChange" class="hidden" />
           </label>
         </div>
-        <div>
-          <p class="font-bold">{{ user.name }}</p>
-          <p class="text-sm text-muted-foreground">@{{ user.username }}</p>
-        </div>
-        <div v-if="user.is_vip" class="ml-auto flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-gold/20 to-amber-500/20 rounded-xl border border-gold/30">
-          <Crown class="w-4 h-4 text-gold" />
-          <span class="text-xs font-semibold text-gold">VIP</span>
+
+        <div class="relative z-10 flex items-center gap-4 w-full">
+          <div class="relative">
+            <div class="w-16 h-16 rounded-2xl overflow-hidden bg-secondary ring-2 ring-background">
+              <img 
+                :src="avatarPreview || user.avatar || '/images/default-avatar.svg'" 
+                class="w-full h-full object-cover" 
+              />
+            </div>
+            <label class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center cursor-pointer border-2 border-background shadow-sm hover:scale-105 transition-transform">
+              <Camera class="w-3.5 h-3.5 text-white" />
+              <input type="file" accept="image/*" @change="handleAvatarChange" class="hidden" />
+            </label>
+          </div>
+          <div>
+            <p class="font-bold text-lg drop-shadow-sm">{{ user.name }}</p>
+            <p class="text-sm text-foreground/80 drop-shadow-sm">@{{ user.username }}</p>
+          </div>
+          <div v-if="user.is_vip" class="ml-auto flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-gold/20 to-amber-500/20 rounded-xl border border-gold/30 backdrop-blur-md">
+            <Crown class="w-4 h-4 text-gold" />
+            <span class="text-xs font-semibold text-gold">VIP</span>
+          </div>
         </div>
       </div>
 

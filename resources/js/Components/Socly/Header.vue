@@ -1,10 +1,11 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
-import { Bell, Search, Crown, BadgeCheck } from 'lucide-vue-next'
+import { Bell, Search, Crown, BadgeCheck, Heart, MessageCircle, UserPlus, X } from 'lucide-vue-next'
 import axios from 'axios'
 
 const showSearch = ref(false)
+const showNotifications = ref(false)
 const searchQuery = ref('')
 const searchResults = ref([])
 
@@ -29,8 +30,22 @@ const page = usePage()
 const user = computed(() => page.props.auth?.user)
 
 const props = defineProps({
-  notificationCount: { type: Number, default: 0 },
+  notifications: { type: Array, default: () => [] },
 })
+
+const emit = defineEmits(['clear-notifications'])
+
+const iconMap = {
+  like: Heart,
+  comment: MessageCircle,
+  follow: UserPlus,
+}
+
+const colorMap = {
+  like: 'text-red-400',
+  comment: 'text-primary',
+  follow: 'text-accent',
+}
 
 const goToProfile = (id) => {
   searchQuery.value = ''
@@ -90,13 +105,49 @@ const goToProfile = (id) => {
           <Search class="w-5 h-5" />
         </button>
 
-        <button class="relative p-2.5 rounded-xl bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all touch-active">
-          <Bell class="w-5 h-5" />
-          <span 
-            v-if="notificationCount > 0" 
-            class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" 
-          />
-        </button>
+        <div class="relative">
+          <button 
+            @click="showNotifications = !showNotifications"
+            class="relative p-2.5 rounded-xl bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all touch-active"
+          >
+            <Bell class="w-5 h-5" />
+            <span 
+              v-if="notifications.length > 0" 
+              class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" 
+            />
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div v-if="showNotifications" class="absolute top-full right-0 mt-2 w-80 max-h-[400px] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-xl z-50 hide-scrollbar">
+            <div class="p-3 border-b border-border/50 flex items-center justify-between sticky top-0 bg-card/90 backdrop-blur-sm z-10">
+              <h3 class="font-bold text-sm">Oznámení</h3>
+              <button v-if="notifications.length" @click="emit('clear-notifications'); showNotifications = false" class="text-xs text-primary hover:text-primary/80">Vymazat vše</button>
+            </div>
+            
+            <div v-if="notifications.length === 0" class="p-8 text-center text-muted-foreground text-sm">
+              Žádná nová oznámení
+            </div>
+            
+            <div v-else class="flex flex-col">
+              <div
+                v-for="notif in notifications"
+                :key="notif.id"
+                class="p-3 flex items-start gap-3 hover:bg-secondary/50 transition-colors border-b border-border/10 last:border-0"
+              >
+                <div v-if="notif.avatar" class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-primary/10">
+                  <img :src="notif.avatar" class="w-full h-full object-cover" />
+                </div>
+                <div v-else class="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center flex-shrink-0">
+                  <component :is="iconMap[notif.type] || MessageCircle" :class="['w-5 h-5', colorMap[notif.type] || 'text-primary']" />
+                </div>
+                <div class="flex-1 min-w-0 pt-0.5">
+                  <p class="text-sm text-foreground leading-tight">{{ notif.message }}</p>
+                  <p class="text-xs text-muted-foreground mt-1">právě teď</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div v-if="user?.is_vip" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-gold/20 to-amber-500/20 border border-gold/30">
           <Crown class="w-4 h-4 text-gold" />

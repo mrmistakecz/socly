@@ -19,7 +19,9 @@ class WallController extends Controller
         $user = Auth::user();
         $sort = $request->get('sort', 'latest');
 
-        $postsQuery = Post::with('user')
+        $postsQuery = Post::with(['user', 'comments' => function ($q) {
+                $q->with('user')->latest()->limit(5);
+            }])
             ->withCount(['likes', 'comments']);
 
         if ($sort === 'trending') {
@@ -50,6 +52,15 @@ class WallController extends Controller
                     'timeAgo' => $post->created_at->locale('cs')->diffForHumans(),
                     'isLiked' => $user ? $user->hasLiked($post) : false,
                     'isBookmarked' => $user ? $user->hasBookmarked($post) : false,
+                    'recentComments' => $post->comments->map(fn ($c) => [
+                        'id' => $c->id,
+                        'body' => $c->body,
+                        'user' => [
+                            'name' => $c->user->name,
+                            'avatar' => $c->user->avatar,
+                        ],
+                        'timeAgo' => $c->created_at->locale('cs')->diffForHumans(),
+                    ])->values(),
                 ];
             });
 
@@ -142,6 +153,63 @@ class WallController extends Controller
         ]);
     }
 
+    public function postsApi(Request $request)
+    {
+        $user = Auth::user();
+        $sort = $request->get('sort', 'latest');
+        $page = (int) $request->get('page', 1);
+        $limit = 20;
+
+        $postsQuery = Post::with(['user', 'comments' => function ($q) {
+                $q->with('user')->latest()->limit(5);
+            }])
+            ->withCount(['likes', 'comments']);
+
+        if ($sort === 'trending') {
+            $postsQuery->orderByDesc('likes_count');
+        } else {
+            $postsQuery->latest();
+        }
+
+        $posts = $postsQuery
+            ->offset(($page - 1) * $limit)
+            ->limit($limit)
+            ->get()
+            ->map(function ($post) use ($user) {
+                return [
+                    'id' => $post->id,
+                    'creator' => [
+                        'id' => $post->user->id,
+                        'name' => $post->user->name,
+                        'username' => $post->user->username,
+                        'avatar' => $post->user->avatar,
+                        'verified' => $post->user->is_verified,
+                    ],
+                    'image' => $post->image,
+                    'likes' => $post->likes_count,
+                    'comments' => $post->comments_count,
+                    'isLocked' => $post->is_locked,
+                    'price' => $post->price,
+                    'isVideo' => $post->is_video,
+                    'caption' => $post->caption,
+                    'timeAgo' => $post->created_at->locale('cs')->diffForHumans(),
+                    'isLiked' => $user ? $user->hasLiked($post) : false,
+                    'isBookmarked' => $user ? $user->hasBookmarked($post) : false,
+                    'recentComments' => $post->comments->map(fn ($c) => [
+                        'id' => $c->id,
+                        'body' => $c->body,
+                        'user' => [
+                            'name' => $c->user->name,
+                            'avatar' => $c->user->avatar,
+                        ],
+                        'timeAgo' => $c->created_at->locale('cs')->diffForHumans(),
+                    ])->values(),
+                ];
+            });
+
+        return response()->json(['posts' => $posts]);
+    }
+
     public function like(Post $post)
     {
         $user = Auth::user();
@@ -212,6 +280,42 @@ class WallController extends Controller
         }
 
         return back();
+    }
+
+    public function discover(Request $request)
+    {
+        $category = $request->get('category', 'all');
+
+        $query = Post::with('user');
+
+        switch ($category) {
+            case 'trending':
+                $query->orderByDesc('likes_count');
+                break;
+            case 'popular':
+                $query->where('likes_count', '>=', 1)->orderByDesc('comments_count');
+                break;
+            case 'new':
+                $query->orderByDesc('created_at');
+                break;
+            case 'vip':
+                $query->whereHas('user', fn ($q) => $q->where('is_vip', true));
+                break;
+            default:
+                $query->orderByDesc('likes_count');
+        }
+
+        $posts = $query->limit(18)->get()->map(fn ($p) => [
+            'id' => $p->id,
+            'image' => $p->image,
+            'isLocked' => $p->is_locked,
+            'isVideo' => $p->is_video,
+            'likes' => $this->formatNumber($p->likes_count),
+            'caption' => $p->caption,
+            'creator' => ['id' => $p->user->id],
+        ]);
+
+        return response()->json(['posts' => $posts]);
     }
 
     public function bookmarks()

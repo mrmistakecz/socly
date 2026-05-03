@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send, ArrowLeft } from 'lucide-vue-next'
 import axios from 'axios'
@@ -7,6 +7,23 @@ import axios from 'axios'
 const props = defineProps({
   conversations: { type: Array, default: () => [] },
   pendingChatUserId: { type: Number, default: null },
+  incomingMessage: { type: Object, default: null },
+})
+
+watch(() => props.incomingMessage, async (msg) => {
+  if (!msg || !selectedConv.value) return
+  if (msg.sender_id === selectedConv.value.id) {
+    chatMessages.value.push({
+      id: msg.id,
+      body: msg.body,
+      isOwn: false,
+      time: new Date(msg.created_at).toLocaleTimeString('cs', { hour: '2-digit', minute: '2-digit' }),
+      date: '',
+    })
+    await nextTick()
+    scrollToBottom()
+    axios.post(`/messages/${selectedConv.value.id}/read`)
+  }
 })
 
 onMounted(() => {
