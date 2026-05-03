@@ -53,10 +53,10 @@ class WallController extends Controller
                 ];
             });
 
-        $creators = User::where('is_creator', true)
+        $creators = User::where('id', '!=', $user?->id)
             ->withCount('followers')
             ->orderByDesc('followers_count')
-            ->limit(6)
+            ->limit(8)
             ->get()
             ->map(fn ($c) => [
                 'id' => $c->id,
@@ -67,10 +67,10 @@ class WallController extends Controller
                 'isLive' => false,
             ]);
 
-        $topCreators = User::where('is_creator', true)
+        $topCreators = User::where('id', '!=', $user?->id)
             ->withCount('followers')
             ->orderByDesc('followers_count')
-            ->limit(4)
+            ->limit(10)
             ->get()
             ->map(fn ($c, $i) => [
                 'id' => $c->id,

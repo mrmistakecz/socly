@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                     'is_vip' => $request->user()->is_vip,
                     'is_creator' => $request->user()->is_creator,
                     'subscription_price' => $request->user()->subscription_price,
+                    'is_admin' => $request->user()->is_admin,
                     'followers_count' => $request->user()->followers()->count(),
                     'following_count' => $request->user()->following()->count(),
                     'posts_count' => $request->user()->posts()->count(),

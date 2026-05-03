@@ -58,3 +58,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/search', [SearchController::class, 'index'])->middleware('throttle:30,1')->name('search');
 });
 
+// Admin routes
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix('admin')->group(function () {
+    Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::put('/users/{user}', [App\Http\Controllers\AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::delete('/users/{user}', [App\Http\Controllers\AdminController::class, 'deleteUser'])->name('admin.users.delete');
+    Route::delete('/posts/{post}', [App\Http\Controllers\AdminController::class, 'deletePost'])->name('admin.posts.delete');
+});
+

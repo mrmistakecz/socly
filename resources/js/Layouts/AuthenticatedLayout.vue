@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
-import { Home, Compass, Plus, MessageCircle, User, Settings, LogOut, Search } from 'lucide-vue-next'
+import { Home, Compass, Plus, MessageCircle, User, Settings, LogOut, Search, Shield } from 'lucide-vue-next'
 import Header from '@/Components/Socly/Header.vue'
 import BottomNav from '@/Components/Socly/BottomNav.vue'
 import FlashMessage from '@/Components/Socly/FlashMessage.vue'
@@ -134,6 +134,14 @@ const handleLogout = () => {
           </div>
         </div>
 
+        <button
+          v-if="authUser?.is_admin"
+          @click="router.visit('/admin')"
+          class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all text-destructive/70 focus-ring"
+        >
+          <Shield class="w-[18px] h-[18px]" />
+          <span class="text-sm font-medium">Admin Panel</span>
+        </button>
         <button
           @click="router.visit('/settings')"
           class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-secondary/40 transition-all text-muted-foreground hover:text-foreground focus-ring"
