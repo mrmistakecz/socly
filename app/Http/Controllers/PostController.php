@@ -30,7 +30,7 @@ class PostController extends Controller
             ? '/storage/' . $path
             : Storage::disk($disk)->url($path);
 
-        Post::create([
+        $post = Post::create([
             'user_id' => Auth::id(),
             'caption' => $validated['caption'] ?? null,
             'image' => $imageUrl,
@@ -38,10 +38,38 @@ class PostController extends Controller
             'price' => $validated['price'] ?? null,
         ]);
 
+        if ($request->wantsJson()) {
+            $user = Auth::user();
+            return response()->json([
+                'success' => true,
+                'post' => [
+                    'id' => $post->id,
+                    'creator' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'username' => $user->username,
+                        'avatar' => $user->avatar,
+                        'verified' => $user->is_verified,
+                    ],
+                    'image' => $post->image,
+                    'likes' => 0,
+                    'comments' => 0,
+                    'isLocked' => $post->is_locked,
+                    'price' => $post->price,
+                    'isVideo' => $post->is_video,
+                    'caption' => $post->caption,
+                    'timeAgo' => 'právě teď',
+                    'isLiked' => false,
+                    'isBookmarked' => false,
+                    'recentComments' => [],
+                ]
+            ]);
+        }
+
         return redirect('/?tab=home')->with('success', 'Příspěvek byl vytvořen!');
     }
 
-    public function destroy(Post $post)
+    public function destroy(Request $request, Post $post)
     {
         if ($post->user_id !== Auth::id()) {
             abort(403);
@@ -59,6 +87,7 @@ class PostController extends Controller
 
         $post->delete();
 
+        if ($request->wantsJson()) return response()->json(['success' => true]);
         return back()->with('success', 'Příspěvek byl smazán.');
     }
 }

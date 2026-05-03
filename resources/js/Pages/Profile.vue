@@ -29,9 +29,13 @@ const formatNumber = (num) => {
   return num?.toString() || '0'
 }
 
-const handleFollow = () => {
+const handleFollow = async () => {
   following.value = !following.value
-  router.post(`/users/${props.profileUser.id}/follow`, {}, { preserveScroll: true, preserveState: true })
+  try {
+    await axios.post(`/users/${props.profileUser.id}/follow`)
+  } catch {
+    following.value = !following.value
+  }
 }
 
 const handleMessage = () => {

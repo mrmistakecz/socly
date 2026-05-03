@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Heart, MessageCircle, Share2, Bookmark, Lock, Sparkles, Eye, MoreHorizontal, Trash2, Check } from 'lucide-vue-next'
 import { usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 
 const props = defineProps({
   id: Number,
@@ -52,44 +53,50 @@ watch(() => props.realtimeUpdate, (update) => {
   if (update.type === 'comments') currentComments.value = update.count
 })
 
-const handleComment = () => {
+const handleComment = async () => {
   if (!commentText.value.trim() || commenting.value) return
   commenting.value = true
   const body = commentText.value.trim()
-  router.post(`/posts/${props.id}/comment`, { body }, {
-    preserveScroll: true,
-    preserveState: true,
-    onSuccess: () => {
-      localComments.value.unshift({
-        id: Date.now(),
-        body,
-        user: { name: page.props.auth?.user?.name, avatar: page.props.auth?.user?.avatar },
-        timeAgo: 'právě teď',
-      })
-      currentComments.value++
-      commentText.value = ''
-      commenting.value = false
-    },
-    onError: () => { commenting.value = false },
-  })
+  
+  try {
+    await axios.post(`/posts/${props.id}/comment`, { body })
+    
+    localComments.value.unshift({
+      id: Date.now(),
+      body,
+      user: { name: page.props.auth?.user?.name, avatar: page.props.auth?.user?.avatar },
+      timeAgo: 'právě teď',
+    })
+    currentComments.value++
+    commentText.value = ''
+  } catch (e) {}
+  
+  commenting.value = false
 }
 
-const handleLike = () => {
+const handleLike = async () => {
   liked.value = !liked.value
   currentLikes.value = liked.value ? currentLikes.value + 1 : currentLikes.value - 1
-  router.post(`/posts/${props.id}/like`, {}, { preserveScroll: true, preserveState: true })
+  try {
+    await axios.post(`/posts/${props.id}/like`)
+  } catch {
+    liked.value = !liked.value
+    currentLikes.value = liked.value ? currentLikes.value + 1 : currentLikes.value - 1
+  }
 }
 
-const handleBookmark = () => {
+const handleBookmark = async () => {
   bookmarked.value = !bookmarked.value
-  router.post(`/posts/${props.id}/bookmark`, {}, { preserveScroll: true, preserveState: true })
+  try {
+    await axios.post(`/posts/${props.id}/bookmark`)
+  } catch {
+    bookmarked.value = !bookmarked.value
+  }
 }
 
 const handleDoubleTap = () => {
   if (!liked.value) {
-    liked.value = true
-    currentLikes.value++
-    router.post(`/posts/${props.id}/like`, {}, { preserveScroll: true, preserveState: true })
+    handleLike()
   }
   showHeart.value = true
   setTimeout(() => showHeart.value = false, 800)
@@ -110,9 +117,14 @@ const handleShare = async () => {
   } catch {}
 }
 
-const handleDelete = () => {
+const emit = defineEmits(['deleted'])
+
+const handleDelete = async () => {
   if (!confirm('Opravdu chcete smazat tento příspěvek?')) return
-  router.delete(`/posts/${props.id}`, { preserveScroll: true })
+  try {
+    await axios.delete(`/posts/${props.id}`)
+    emit('deleted', props.id)
+  } catch {}
 }
 </script>
 

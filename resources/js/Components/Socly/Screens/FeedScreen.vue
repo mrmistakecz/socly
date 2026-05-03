@@ -180,6 +180,7 @@ onUnmounted(() => {
           :key="post.id" 
           v-bind="post"
           :realtime-update="postUpdates.postId === post.id ? postUpdates : null"
+          @deleted="feedData = feedData.filter(p => p.id !== post.id)"
         />
       </div>
 

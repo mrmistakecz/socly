@@ -56,6 +56,14 @@ const handleTabChange = (tab) => {
   activeTab.value = tab
 }
 
+const newLocalPosts = ref([])
+
+const handlePostCreated = (post) => {
+  showCreatePost.value = false
+  newLocalPosts.value.unshift(post)
+  if (activeTab.value !== 'home') activeTab.value = 'home'
+}
+
 const currentScreen = computed(() => {
   switch (activeTab.value) {
     case 'home':
@@ -71,7 +79,7 @@ const currentScreen = computed(() => {
 
 const screenProps = computed(() => {
   if (activeTab.value === 'home') {
-    return { posts: props.posts, stories: props.stories, postUpdates: postUpdates.value }
+    return { posts: [...newLocalPosts.value, ...props.posts], stories: props.stories, postUpdates: postUpdates.value }
   }
   if (activeTab.value === 'discover') {
     return { onOpenLive: handleOpenLive, topCreators: props.topCreators, trendingPosts: props.trendingPosts }
@@ -100,7 +108,8 @@ const screenProps = computed(() => {
   <!-- Create Post Modal -->
   <CreatePostModal 
     v-if="showCreatePost" 
-    @close="showCreatePost = false" 
+    @close="showCreatePost = false"
+    @created="handlePostCreated"
   />
 
   <!-- Real-time Notification Toasts -->

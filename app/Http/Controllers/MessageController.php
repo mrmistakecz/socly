@@ -24,14 +24,15 @@ class MessageController extends Controller
             return back()->with('error', 'Nemůžete poslat zprávu sami sobě.');
         }
 
-        $msg = Message::create([
+        $message = Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'],
             'body' => $validated['body'],
         ]);
 
-        broadcast(new NewMessage($msg->load('sender')))->toOthers();
+        broadcast(new NewMessage($message))->toOthers();
 
+        if ($request->wantsJson()) return response()->json(['success' => true, 'message' => $message]);
         return back()->with('success', 'Zpráva odeslána.');
     }
 

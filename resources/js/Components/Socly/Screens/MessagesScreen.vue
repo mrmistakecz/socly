@@ -99,13 +99,12 @@ const sendMessage = async () => {
   await nextTick()
   scrollToBottom()
 
-  router.post('/messages', {
-    receiver_id: selectedConv.value.id,
-    body,
-  }, {
-    preserveScroll: true,
-    preserveState: true,
-  })
+  try {
+    await axios.post('/messages', {
+      receiver_id: selectedConv.value.id,
+      body,
+    })
+  } catch {}
 }
 </script>
 

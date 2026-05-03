@@ -206,7 +206,7 @@ class WallController extends Controller
         return response()->json(['posts' => $posts]);
     }
 
-    public function like(Post $post)
+    public function like(Request $request, Post $post)
     {
         $user = Auth::user();
         $existing = $user->likes()->where('post_id', $post->id)->first();
@@ -215,6 +215,7 @@ class WallController extends Controller
             $existing->delete();
             $post->decrement('likes_count');
             broadcast(new PostInteraction($post->id, 'likes', $post->likes_count - 1))->toOthers();
+            if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'unliked']);
             return back();
         }
 
@@ -232,20 +233,24 @@ class WallController extends Controller
             ));
         }
 
+        if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'liked']);
         return back();
     }
 
-    public function bookmark(Post $post)
+    public function bookmark(Request $request, Post $post)
     {
         $user = Auth::user();
         $existing = $user->bookmarks()->where('post_id', $post->id)->first();
 
         if ($existing) {
             $existing->delete();
+            if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'unbookmarked']);
             return back();
         }
 
         $user->bookmarks()->create(['post_id' => $post->id]);
+        
+        if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'bookmarked']);
         return back();
     }
 
@@ -275,6 +280,7 @@ class WallController extends Controller
             ));
         }
 
+        if ($request->wantsJson()) return response()->json(['success' => true]);
         return back();
     }
 

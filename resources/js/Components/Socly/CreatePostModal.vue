@@ -3,7 +3,9 @@ import { ref } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { X, Image as ImageIcon, Lock, Sparkles, Upload } from 'lucide-vue-next'
 
-const emit = defineEmits(['close'])
+import axios from 'axios'
+
+const emit = defineEmits(['close', 'created'])
 const page = usePage()
 
 const form = useForm({
@@ -34,13 +36,33 @@ const handleDrop = (e) => {
   }
 }
 
-const submit = () => {
-  form.post('/posts', {
-    forceFormData: true,
-    onSuccess: () => {
+const processing = ref(false)
+
+const submit = async () => {
+  if (!form.image || processing.value) return
+  processing.value = true
+
+  const formData = new FormData()
+  formData.append('caption', form.caption)
+  formData.append('image', form.image)
+  formData.append('is_locked', form.is_locked ? 1 : 0)
+  formData.append('price', form.price)
+
+  try {
+    const { data } = await axios.post('/posts', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (data.success && data.post) {
+      emit('created', data.post)
       emit('close')
-    },
-  })
+    }
+  } catch (e) {
+    if (e.response?.data?.errors) {
+      form.errors = e.response.data.errors
+    }
+  }
+  
+  processing.value = false
 }
 </script>
 
@@ -146,10 +168,10 @@ const submit = () => {
         <!-- Submit -->
         <button
           type="submit"
-          :disabled="form.processing || !form.image"
+          :disabled="processing || !form.image"
           class="w-full py-4 rounded-xl bg-gradient-to-r from-primary via-pink-500 to-accent text-white font-bold btn-premium glow-primary transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span v-if="form.processing">Nahrávání...</span>
+          <span v-if="processing">Nahrávání...</span>
           <span v-else class="flex items-center justify-center gap-2">
             <Sparkles class="w-5 h-5" />
             Publikovat
