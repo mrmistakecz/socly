@@ -7,6 +7,7 @@ import FeedCard from './FeedCard.vue'
 const props = defineProps({
   posts: { type: Array, default: () => [] },
   stories: { type: Array, default: () => [] },
+  postUpdates: { type: Object, default: () => ({}) },
 })
 
 const page = usePage()
@@ -114,7 +115,8 @@ const activeFilter = ref('latest')
         <FeedCard 
           v-for="post in feedData" 
           :key="post.id" 
-          v-bind="post" 
+          v-bind="post"
+          :realtime-update="postUpdates.postId === post.id ? postUpdates : null"
         />
       </div>
 

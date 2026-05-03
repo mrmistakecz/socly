@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,6 +22,14 @@ class FollowController extends Controller
         }
 
         $me->following()->attach($user->id);
+
+        broadcast(new NewNotification(
+            userId: $user->id,
+            type: 'follow',
+            message: $me->name . ' vás začal/a sledovat',
+            avatar: $me->avatar,
+        ));
+
         return back()->with('success', 'Sledujete ' . $user->name);
     }
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Heart, MessageCircle, Share2, Bookmark, Lock, Sparkles, Eye, MoreHorizontal } from 'lucide-vue-next'
 
@@ -26,7 +26,8 @@ const props = defineProps({
     default: 150
   },
   caption: String,
-  timeAgo: String
+  timeAgo: String,
+  realtimeUpdate: { type: Object, default: null },
 })
 
 const liked = ref(props.isLiked)
@@ -36,6 +37,13 @@ const showHeart = ref(false)
 const showComments = ref(false)
 const commentText = ref('')
 const commenting = ref(false)
+const currentComments = ref(props.comments)
+
+watch(() => props.realtimeUpdate, (update) => {
+  if (!update) return
+  if (update.type === 'likes') currentLikes.value = update.count
+  if (update.type === 'comments') currentComments.value = update.count
+})
 
 const handleComment = () => {
   if (!commentText.value.trim() || commenting.value) return
@@ -163,7 +171,7 @@ const goToProfile = () => {
           
           <button @click="showComments = !showComments" :class="['flex items-center gap-2 px-3 py-2 rounded-lg transition-all', showComments ? 'bg-primary/10 text-primary' : 'hover:bg-secondary/50 text-muted-foreground']">
             <MessageCircle class="w-5 h-5" />
-            <span class="text-sm font-medium">{{ comments }}</span>
+            <span class="text-sm font-medium">{{ currentComments }}</span>
           </button>
           
           <button class="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground">

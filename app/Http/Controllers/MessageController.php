@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewMessage;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,11 +24,13 @@ class MessageController extends Controller
             return back()->with('error', 'Nemůžete poslat zprávu sami sobě.');
         }
 
-        Message::create([
+        $msg = Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'],
             'body' => $validated['body'],
         ]);
+
+        broadcast(new NewMessage($msg->load('sender')))->toOthers();
 
         return back()->with('success', 'Zpráva odeslána.');
     }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewNotification;
+use App\Events\PostInteraction;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Message;
@@ -141,11 +143,24 @@ class WallController extends Controller
         if ($existing) {
             $existing->delete();
             $post->decrement('likes_count');
+            broadcast(new PostInteraction($post->id, 'likes', $post->likes_count - 1))->toOthers();
             return back();
         }
 
         $user->likes()->create(['post_id' => $post->id]);
         $post->increment('likes_count');
+        broadcast(new PostInteraction($post->id, 'likes', $post->likes_count + 1))->toOthers();
+
+        if ($post->user_id !== $user->id) {
+            broadcast(new NewNotification(
+                userId: $post->user_id,
+                type: 'like',
+                message: $user->name . ' dal/a like vašemu příspěvku',
+                avatar: $user->avatar,
+                postId: $post->id,
+            ));
+        }
+
         return back();
     }
 
@@ -169,12 +184,26 @@ class WallController extends Controller
             'body' => ['required', 'string', 'max:1000'],
         ]);
 
+        $user = Auth::user();
+
         $post->comments()->create([
-            'user_id' => Auth::id(),
+            'user_id' => $user->id,
             'body' => $validated['body'],
         ]);
 
         $post->increment('comments_count');
+        broadcast(new PostInteraction($post->id, 'comments', $post->comments_count + 1))->toOthers();
+
+        if ($post->user_id !== $user->id) {
+            broadcast(new NewNotification(
+                userId: $post->user_id,
+                type: 'comment',
+                message: $user->name . ' komentoval/a váš příspěvek',
+                avatar: $user->avatar,
+                postId: $post->id,
+            ));
+        }
+
         return back();
     }
 

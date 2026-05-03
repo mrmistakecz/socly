@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import FeedScreen from '@/Components/Socly/Screens/FeedScreen.vue'
@@ -7,6 +7,8 @@ import DiscoverScreen from '@/Components/Socly/Screens/DiscoverScreen.vue'
 import MessagesScreen from '@/Components/Socly/Screens/MessagesScreen.vue'
 import LiveScreen from '@/Components/Socly/Screens/LiveScreen.vue'
 import CreatePostModal from '@/Components/Socly/CreatePostModal.vue'
+import RealtimeToast from '@/Components/Socly/RealtimeToast.vue'
+import { useRealtime } from '@/composables/useRealtime'
 
 const props = defineProps({
   posts: { type: Array, default: () => [] },
@@ -20,6 +22,15 @@ const page = usePage()
 const activeTab = ref('home')
 const showLive = ref(false)
 const showCreatePost = ref(false)
+
+const { notifications, incomingMessage, postUpdates, dismissNotification } = useRealtime()
+
+// When a new message arrives and we're on the messages tab, soft-reload
+watch(incomingMessage, (msg) => {
+  if (msg) {
+    router.reload({ only: ['conversations'], preserveScroll: true })
+  }
+})
 
 const handleOpenLive = () => {
   showLive.value = true
@@ -56,7 +67,7 @@ const currentScreen = computed(() => {
 
 const screenProps = computed(() => {
   if (activeTab.value === 'home') {
-    return { posts: props.posts, stories: props.stories }
+    return { posts: props.posts, stories: props.stories, postUpdates: postUpdates.value }
   }
   if (activeTab.value === 'discover') {
     return { onOpenLive: handleOpenLive, topCreators: props.topCreators, trendingPosts: props.trendingPosts }
@@ -87,4 +98,7 @@ const screenProps = computed(() => {
     v-if="showCreatePost" 
     @close="showCreatePost = false" 
   />
+
+  <!-- Real-time Notification Toasts -->
+  <RealtimeToast :notifications="notifications" @dismiss="dismissNotification" />
 </template>
