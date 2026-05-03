@@ -47,7 +47,7 @@ return [
     |
     */
 
-    'encrypt' => env('SESSION_ENCRYPT', false),
+    'encrypt' => env('SESSION_ENCRYPT', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +169,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -200,6 +200,13 @@ return [
     */
 
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Note: In production set SESSION_SECURE_COOKIE=true and
+    | SESSION_SAME_SITE=strict in your .env for maximum security.
+    |--------------------------------------------------------------------------
+    */
 
     /*
     |--------------------------------------------------------------------------

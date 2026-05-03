@@ -35,22 +35,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
 
     // Posts
-    Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1')->name('posts.store');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
     // Interactions
-    Route::post('/posts/{post}/like', [WallController::class, 'like'])->name('posts.like');
-    Route::post('/posts/{post}/bookmark', [WallController::class, 'bookmark'])->name('posts.bookmark');
-    Route::post('/posts/{post}/comment', [WallController::class, 'comment'])->name('posts.comment');
+    Route::post('/posts/{post}/like', [WallController::class, 'like'])->middleware('throttle:60,1')->name('posts.like');
+    Route::post('/posts/{post}/bookmark', [WallController::class, 'bookmark'])->middleware('throttle:60,1')->name('posts.bookmark');
+    Route::post('/posts/{post}/comment', [WallController::class, 'comment'])->middleware('throttle:30,1')->name('posts.comment');
 
     // Follow
-    Route::post('/users/{user}/follow', [FollowController::class, 'toggle'])->name('users.follow');
+    Route::post('/users/{user}/follow', [FollowController::class, 'toggle'])->middleware('throttle:30,1')->name('users.follow');
 
     // Messages
-    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
-    Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->name('messages.read');
+    Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
+    Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->middleware('throttle:60,1')->name('messages.read');
 
     // Search
-    Route::get('/api/search', [SearchController::class, 'index'])->name('search');
+    Route::get('/api/search', [SearchController::class, 'index'])->middleware('throttle:30,1')->name('search');
 });
 

@@ -10,14 +10,16 @@ class SearchController extends Controller
 {
     public function index(Request $request)
     {
-        $q = $request->get('q', '');
+        $q = trim($request->get('q', ''));
 
-        if (strlen($q) < 2) {
+        if (mb_strlen($q) < 2 || mb_strlen($q) > 100) {
             return response()->json(['users' => [], 'posts' => []]);
         }
 
-        $users = User::where('name', 'like', "%{$q}%")
-            ->orWhere('username', 'like', "%{$q}%")
+        $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $q);
+
+        $users = User::where('name', 'ilike', "%{$escaped}%")
+            ->orWhere('username', 'ilike', "%{$escaped}%")
             ->withCount('followers')
             ->limit(10)
             ->get()

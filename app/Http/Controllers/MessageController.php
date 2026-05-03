@@ -19,6 +19,10 @@ class MessageController extends Controller
             'body.max' => 'Zpráva může mít maximálně 2000 znaků.',
         ]);
 
+        if ((int) $validated['receiver_id'] === Auth::id()) {
+            return back()->with('error', 'Nemůžete poslat zprávu sami sobě.');
+        }
+
         Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'],
