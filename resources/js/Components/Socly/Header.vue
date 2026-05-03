@@ -50,7 +50,7 @@ const goToProfile = (id) => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Hledat tvurce, obsah..."
+            placeholder="Hledat tvůrce, obsah..."
             class="w-full pl-10 pr-4 py-2.5 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
           />
           <!-- Search Results Dropdown -->
@@ -101,7 +101,7 @@ const goToProfile = (id) => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Hledat tvurce, obsah..."
+          placeholder="Hledat tvůrce, obsah..."
           autofocus
           class="w-full pl-10 pr-4 py-2.5 bg-secondary/50 border border-border/50 rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
         />

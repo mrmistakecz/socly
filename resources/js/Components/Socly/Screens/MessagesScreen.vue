@@ -42,17 +42,32 @@ const sendMessage = () => {
 </script>
 
 <template>
-  <div class="pt-20 pb-32 px-4">
-    <!-- Header -->
-    <div class="mb-6">
+  <div class="min-h-dvh pb-32 lg:pb-8">
+    <!-- Desktop Header -->
+    <div class="hidden lg:block sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">Zprávy</h1>
+          <p class="text-sm text-muted-foreground">Vaše konverzace s tvůrci</p>
+        </div>
+        <div v-if="totalUnread > 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10">
+          <span class="text-xs font-semibold text-primary">{{ totalUnread }} {{ totalUnread === 1 ? 'nová' : 'nové' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="lg:hidden pt-20 px-4 mb-6">
       <div class="flex items-center justify-between mb-1">
         <h1 class="text-2xl font-bold text-foreground">Zprávy</h1>
-        <div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10">
+        <div v-if="totalUnread > 0" class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10">
           <span class="text-xs font-semibold text-primary">{{ totalUnread }} {{ totalUnread === 1 ? 'nová' : 'nové' }}</span>
         </div>
       </div>
       <p class="text-sm text-muted-foreground">Vaše konverzace s tvůrci</p>
     </div>
+
+    <div class="px-4 lg:px-6">
 
     <!-- Search -->
     <div class="relative mb-6">
@@ -233,9 +248,11 @@ const sendMessage = () => {
       <p class="text-sm text-muted-foreground">Sledujte tvůrce a začněte konverzaci</p>
     </div>
 
+    </div>
+
     <!-- Quick Reply Bar -->
-    <div v-if="selectedConv" class="fixed bottom-20 left-0 right-0 px-4 pb-4 z-30 lg:bottom-4">
-      <div class="glass-card rounded-2xl p-3 flex items-center gap-3">
+    <div v-if="selectedConv" class="fixed bottom-20 left-0 right-0 px-4 pb-4 z-30 lg:bottom-4 lg:left-[260px]">
+      <div class="glass-card rounded-2xl p-3 flex items-center gap-3 max-w-3xl mx-auto">
         <img :src="selectedConv.avatar" class="w-8 h-8 rounded-lg object-cover" />
         <input
           v-model="newMessage"

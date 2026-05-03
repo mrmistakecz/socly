@@ -49,7 +49,7 @@ const goToProfile = (id) => {
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold">Objevovat</h1>
-          <p class="text-sm text-muted-foreground">Najdete nove tvurce a obsah</p>
+          <p class="text-sm text-muted-foreground">Najděte nové tvůrce a obsah</p>
         </div>
         <div class="flex-1 max-w-md mx-8">
           <div class="relative">
@@ -172,7 +172,7 @@ const goToProfile = (id) => {
                   class="w-4 h-4 text-primary fill-primary/20 flex-shrink-0" 
                 />
               </div>
-              <p class="text-sm text-muted-foreground">{{ creator.followers }} odberatelu</p>
+              <p class="text-sm text-muted-foreground">{{ creator.followers }} odběratelů</p>
             </div>
             
             <div class="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium group-hover:bg-primary group-hover:text-white transition-all">
