@@ -2,6 +2,12 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { X, Heart, Users, Gift, Send, Sparkles, Crown, Star, Zap, ChevronDown } from 'lucide-vue-next'
 
+const props = defineProps({
+  streamImage: { type: String, default: null },
+  creatorAvatar: { type: String, default: null },
+  creatorName: { type: String, default: 'Tvůrce' },
+})
+
 const emit = defineEmits(['close'])
 
 const initialMessages = [
@@ -106,7 +112,7 @@ const handleSendMessage = (e) => {
     <!-- Video Background -->
     <div class="absolute inset-0">
       <img
-        src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1200&h=1600&fit=crop"
+        :src="streamImage || '/images/default-cover.svg'"
         alt="Live stream"
         class="w-full h-full object-cover"
       />
@@ -132,7 +138,7 @@ const handleSendMessage = (e) => {
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-destructive via-primary to-accent p-[2px] animate-pulse-glow">
               <div class="w-full h-full rounded-full overflow-hidden bg-black p-[2px]">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face"
+                  :src="creatorAvatar || '/images/default-avatar.svg'"
                   alt="Creator"
                   class="w-full h-full rounded-full object-cover"
                 />

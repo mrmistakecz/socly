@@ -37,7 +37,7 @@ class ProfileController extends Controller
                 'name' => $user->name,
                 'username' => '@' . $user->username,
                 'avatar' => $user->avatar,
-                'cover' => $user->cover_image ?: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=800&h=400&fit=crop',
+                'cover' => $user->cover_image ?: '/images/default-cover.svg',
                 'bio' => $user->bio,
                 'followers' => $user->followers_count,
                 'following' => $user->following_count,

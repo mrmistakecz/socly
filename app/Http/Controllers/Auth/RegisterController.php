@@ -24,6 +24,8 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
             'username' => ['required', 'string', 'max:50', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
+            'date_of_birth' => ['required', 'date', 'before_or_equal:' . now()->subYears(18)->format('Y-m-d')],
+            'terms' => ['required', 'accepted'],
         ], [
             'name.required' => 'Jméno je povinné.',
             'email.required' => 'Email je povinný.',
@@ -35,6 +37,10 @@ class RegisterController extends Controller
             'username.required' => 'Uživatelské jméno je povinné.',
             'username.unique' => 'Toto uživatelské jméno je již obsazeno.',
             'username.regex' => 'Uživatelské jméno může obsahovat pouze písmena, čísla a podtržítka.',
+            'date_of_birth.required' => 'Datum narození je povinné.',
+            'date_of_birth.before_or_equal' => 'Musíte být starší 18 let.',
+            'terms.required' => 'Musíte souhlasit s podmínkami.',
+            'terms.accepted' => 'Musíte souhlasit s podmínkami.',
         ]);
 
         $user = User::create([
@@ -42,6 +48,8 @@ class RegisterController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'username' => $validated['username'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'terms_accepted_at' => now(),
         ]);
 
         Auth::login($user);

@@ -121,7 +121,7 @@ const handleLogout = () => {
         <!-- User Card -->
         <div v-if="authUser" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/20 mb-2">
           <img
-            :src="authUser.avatar || 'https://i.pravatar.cc/40'"
+            :src="authUser.avatar || '/images/default-avatar.svg'"
             class="w-9 h-9 rounded-lg object-cover ring-2 ring-primary/20"
           />
           <div class="flex-1 min-w-0">

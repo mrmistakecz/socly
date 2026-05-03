@@ -31,6 +31,8 @@ class User extends Authenticatable
         'is_vip',
         'is_creator',
         'subscription_price',
+        'date_of_birth',
+        'terms_accepted_at',
     ];
 
     /**
@@ -56,6 +58,8 @@ class User extends Authenticatable
             'is_verified' => 'boolean',
             'is_vip' => 'boolean',
             'is_creator' => 'boolean',
+            'date_of_birth' => 'date',
+            'terms_accepted_at' => 'datetime',
         ];
     }
 

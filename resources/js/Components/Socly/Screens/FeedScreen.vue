@@ -17,7 +17,7 @@ const storiesWithOwn = computed(() => {
   const own = {
     id: 0,
     name: 'Vaše story',
-    avatar: authUser.value?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+    avatar: authUser.value?.avatar || '/images/default-avatar.svg',
     hasStory: false,
     isOwn: true,
   }

@@ -86,7 +86,7 @@ const filteredPosts = computed(() => {
           <div class="w-28 h-28 lg:w-36 lg:h-36 rounded-2xl bg-gradient-to-br from-primary via-pink-500 to-accent p-[3px] glow-primary-intense">
             <div class="w-full h-full rounded-2xl overflow-hidden bg-background p-[3px]">
               <img
-                :src="profileUser.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face'"
+                :src="profileUser.avatar || '/images/default-avatar.svg'"
                 :alt="profileUser.name"
                 class="w-full h-full rounded-2xl object-cover"
               />

@@ -24,7 +24,7 @@ class SecurityHeaders
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: blob: https://images.unsplash.com https://i.pravatar.cc",
+            "img-src 'self' data: blob:",
             "connect-src 'self'",
             "media-src 'self' blob:",
             "object-src 'none'",

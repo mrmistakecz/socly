@@ -61,7 +61,7 @@ const goToProfile = (id) => {
               @click="goToProfile(user.id)"
               class="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
             >
-              <img :src="user.avatar || 'https://i.pravatar.cc/40'" class="w-9 h-9 rounded-xl object-cover" />
+              <img :src="user.avatar || '/images/default-avatar.svg'" class="w-9 h-9 rounded-xl object-cover" />
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1">
                   <span class="text-sm font-medium truncate">{{ user.name }}</span>
@@ -113,7 +113,7 @@ const goToProfile = (id) => {
             @click="goToProfile(user.id)"
             class="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
           >
-            <img :src="user.avatar || 'https://i.pravatar.cc/40'" class="w-9 h-9 rounded-xl object-cover" />
+            <img :src="user.avatar || '/images/default-avatar.svg'" class="w-9 h-9 rounded-xl object-cover" />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1">
                 <span class="text-sm font-medium truncate">{{ user.name }}</span>

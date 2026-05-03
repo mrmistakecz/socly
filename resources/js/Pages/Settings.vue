@@ -66,7 +66,7 @@ const menuItems = [
         <div class="relative">
           <div class="w-16 h-16 rounded-2xl overflow-hidden bg-secondary">
             <img 
-              :src="avatarPreview || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'" 
+              :src="avatarPreview || user.avatar || '/images/default-avatar.svg'" 
               class="w-full h-full object-cover" 
             />
           </div>
