@@ -27,6 +27,45 @@
   --radius: 1rem;
 }
 
+/* Light mode — activated by data-theme="light" on <html> */
+[data-theme="light"] {
+  --background: 0 0% 97%;
+  --foreground: 240 10% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 8%;
+  --primary: 330 80% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 5% 92%;
+  --secondary-foreground: 240 10% 15%;
+  --muted: 240 5% 88%;
+  --muted-foreground: 240 5% 45%;
+  --accent: 280 65% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 80% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 5% 84%;
+  --input: 240 5% 84%;
+  --ring: 330 80% 55%;
+}
+
+/* System light mode fallback */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --background: 0 0% 97%;
+    --foreground: 240 10% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 8%;
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 10% 15%;
+    --muted: 240 5% 88%;
+    --muted-foreground: 240 5% 45%;
+    --border: 240 5% 84%;
+    --input: 240 5% 84%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

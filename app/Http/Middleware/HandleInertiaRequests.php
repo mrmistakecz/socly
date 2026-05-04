@@ -38,22 +38,27 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'username' => $request->user()->username,
-                    'email' => $request->user()->email,
-                    'avatar' => $request->user()->avatar,
-                    'bio' => $request->user()->bio,
-                    'is_verified' => $request->user()->is_verified,
-                    'is_vip' => $request->user()->is_vip,
-                    'is_creator' => $request->user()->is_creator,
-                    'subscription_price' => $request->user()->subscription_price,
-                    'is_admin' => $request->user()->is_admin,
-                    'followers_count' => $request->user()->followers()->count(),
-                    'following_count' => $request->user()->following()->count(),
-                    'posts_count' => $request->user()->posts()->count(),
-                ] : null,
+                'user' => $request->user() ? (function () use ($request) {
+                    $user = $request->user()->loadCount(['followers', 'following', 'posts']);
+                    return [
+                        'id'                 => $user->id,
+                        'name'               => $user->name,
+                        'username'           => $user->username,
+                        'email'              => $user->email,
+                        'avatar'             => $user->avatar,
+                        'bio'                => $user->bio,
+                        'is_verified'        => $user->is_verified,
+                        'is_vip'             => $user->is_vip,
+                        'is_creator'         => $user->is_creator,
+                        'subscription_price' => $user->subscription_price,
+                        'is_admin'           => $user->is_admin,
+                        'balance'               => (float) $user->balance,
+                        'onboarding_completed'  => (bool) $user->onboarding_completed,
+                        'followers_count'       => $user->followers_count,
+                        'following_count'    => $user->following_count,
+                        'posts_count'        => $user->posts_count,
+                    ];
+                })() : null,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

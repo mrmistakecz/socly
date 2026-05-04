@@ -6,6 +6,10 @@ import '../css/app.css'
 
 const appName = import.meta.env.VITE_APP_NAME || 'SOCLY'
 
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+}
+
 createInertiaApp({
     title: (title) => title ? `${title} - ${appName}` : appName,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),

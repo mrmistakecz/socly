@@ -63,8 +63,10 @@ class MessageController extends Controller
         $file = $request->file('file');
         
         // Validate file extension
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'pdf', 'doc', 'docx'];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'pdf', 'doc', 'docx'];
         $extension = strtolower($file->getClientOriginalExtension());
+        // Browser MediaRecorder sometimes sends empty extension — default to webm
+        if (empty($extension)) $extension = 'webm';
         
         if (!in_array($extension, $allowedExtensions)) {
             if ($request->wantsJson()) {

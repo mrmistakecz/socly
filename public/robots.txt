@@ -1,2 +1,8 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /settings
+Disallow: /wallet
+Disallow: /email/verify
+Allow: /
+
+Sitemap: https://socly.eu/sitemap.xml

@@ -8,6 +8,7 @@ import MessagesScreen from '@/Components/Socly/Screens/MessagesScreen.vue'
 import LiveScreen from '@/Components/Socly/Screens/LiveScreen.vue'
 import CreatePostModal from '@/Components/Socly/CreatePostModal.vue'
 import RealtimeToast from '@/Components/Socly/RealtimeToast.vue'
+import OnboardingModal from '@/Components/Socly/OnboardingModal.vue'
 import { useRealtime } from '@/composables/useRealtime'
 
 const props = defineProps({
@@ -54,6 +55,12 @@ const handleTabChange = (tab) => {
     return
   }
   activeTab.value = tab
+}
+
+const showOnboarding = ref(!page.props.auth?.user?.onboarding_completed)
+
+const handleOnboardingDone = () => {
+  showOnboarding.value = false
 }
 
 const newLocalPosts = ref([])
@@ -114,4 +121,7 @@ const screenProps = computed(() => {
 
   <!-- Real-time Notification Toasts -->
   <RealtimeToast :notifications="notifications" @dismiss="dismissNotification" />
+
+  <!-- Onboarding Modal (first login only) -->
+  <OnboardingModal v-if="showOnboarding" @done="handleOnboardingDone" />
 </template>

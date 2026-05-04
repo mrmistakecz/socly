@@ -73,7 +73,11 @@ class AdminController extends Controller
             'is_admin' => ['sometimes', 'boolean'],
         ]);
 
-        $user->update($validated);
+        if (isset($validated['is_verified'])) $user->is_verified = $validated['is_verified'];
+        if (isset($validated['is_vip'])) $user->is_vip = $validated['is_vip'];
+        if (isset($validated['is_creator'])) $user->is_creator = $validated['is_creator'];
+        if (isset($validated['is_admin'])) $user->is_admin = $validated['is_admin'];
+        $user->save();
 
         return back()->with('success', "Uživatel {$user->name} byl aktualizován.");
     }

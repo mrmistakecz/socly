@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\NewNotification;
+use App\Notifications\SoclyNotification;
 use App\Events\PostInteraction;
 use App\Models\Post;
 use App\Models\User;
@@ -153,57 +154,60 @@ class WallController extends Controller
 
     public function postsApi(Request $request)
     {
-        $user = Auth::user();
-        $sort = $request->get('sort', 'latest');
-        $page = (int) $request->get('page', 1);
-        $limit = 20;
+        $user   = Auth::user();
+        $sort   = $request->get('sort', 'latest');
+        $lastId = (int) $request->get('last_id', 0);
+        $limit  = 20;
 
         $postsQuery = Post::with(['user', 'comments.user'])
             ->withCount(['likes', 'comments']);
 
         if ($sort === 'trending') {
-            $postsQuery->orderByDesc('likes_count');
+            $postsQuery->orderByDesc('likes_count')->orderByDesc('id');
+            if ($lastId) $postsQuery->where('id', '<', $lastId);
         } else {
             $postsQuery->latest();
+            if ($lastId) $postsQuery->where('id', '<', $lastId);
         }
 
-        $posts = $postsQuery
-            ->offset(($page - 1) * $limit)
-            ->limit($limit)
-            ->get()
-            ->map(function ($post) use ($user) {
-                return [
-                    'id' => $post->id,
-                    'creator' => [
-                        'id' => $post->user->id,
-                        'name' => $post->user->name,
-                        'username' => $post->user->username,
-                        'avatar' => $post->user->avatar,
-                        'verified' => $post->user->is_verified,
-                    ],
-                    'image' => $post->image,
-                    'likes' => $post->likes_count,
-                    'comments' => $post->comments_count,
-                    'isLocked' => $post->is_locked,
-                    'price' => $post->price,
-                    'isVideo' => $post->is_video,
-                    'caption' => $post->caption,
-                    'timeAgo' => $post->created_at->locale('cs')->diffForHumans(),
-                    'isLiked' => $user ? $user->hasLiked($post) : false,
-                    'isBookmarked' => $user ? $user->hasBookmarked($post) : false,
-                    'recentComments' => $post->comments->sortByDesc('created_at')->take(5)->map(fn ($c) => [
-                        'id' => $c->id,
-                        'body' => $c->body,
-                        'user' => [
-                            'name' => $c->user->name,
-                            'avatar' => $c->user->avatar,
-                        ],
-                        'timeAgo' => $c->created_at->locale('cs')->diffForHumans(),
-                    ])->values(),
-                ];
-            });
+        $posts = $postsQuery->limit($limit + 1)->get();
+        $hasMore = $posts->count() > $limit;
+        $posts = $posts->take($limit);
 
-        return response()->json(['posts' => $posts]);
+        $mapped = $posts->map(function ($post) use ($user) {
+            return [
+                'id'       => $post->id,
+                'creator'  => [
+                    'id'       => $post->user->id,
+                    'name'     => $post->user->name,
+                    'username' => $post->user->username,
+                    'avatar'   => $post->user->avatar,
+                    'verified' => $post->user->is_verified,
+                ],
+                'image'          => $post->image,
+                'likes'          => $post->likes_count,
+                'comments'       => $post->comments_count,
+                'isLocked'       => $post->is_locked,
+                'price'          => $post->price,
+                'isVideo'        => $post->is_video,
+                'caption'        => $post->caption,
+                'timeAgo'        => $post->created_at->locale('cs')->diffForHumans(),
+                'isLiked'        => $user ? $user->hasLiked($post) : false,
+                'isBookmarked'   => $user ? $user->hasBookmarked($post) : false,
+                'recentComments' => $post->comments->sortByDesc('created_at')->take(5)->map(fn ($c) => [
+                    'id'      => $c->id,
+                    'body'    => $c->body,
+                    'user'    => ['name' => $c->user->name, 'avatar' => $c->user->avatar],
+                    'timeAgo' => $c->created_at->locale('cs')->diffForHumans(),
+                ])->values(),
+            ];
+        });
+
+        return response()->json([
+            'posts'    => $mapped,
+            'has_more' => $hasMore,
+            'last_id'  => $posts->last()?->id,
+        ]);
     }
 
     public function like(Request $request, Post $post)
@@ -237,6 +241,7 @@ class WallController extends Controller
                 avatar: $user->avatar,
                 postId: $post->id,
             ));
+            $post->user->notify(new SoclyNotification('like', $user->name . ' dal/a like vašemu příspěvku', $user->avatar, $post->id));
         }
 
         if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'liked', 'count' => $newCount]);
@@ -289,6 +294,7 @@ class WallController extends Controller
                 avatar: $user->avatar,
                 postId: $post->id,
             ));
+            $post->user->notify(new SoclyNotification('comment', $user->name . ' komentoval/a váš příspěvek', $user->avatar, $post->id));
         }
 
         if ($request->wantsJson()) return response()->json(['success' => true]);

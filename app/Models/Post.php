@@ -16,6 +16,7 @@ class Post extends Model
         'user_id',
         'caption',
         'image',
+        'thumbnail',
         'is_locked',
         'price',
         'likes_count',

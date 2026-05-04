@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Events\NewNotification;
 use App\Models\User;
+use App\Notifications\SoclyNotification;
+use App\Services\CreditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -32,6 +34,7 @@ class FollowController extends Controller
             message: $me->name . ' vás začal/a sledovat',
             avatar: $me->avatar,
         ));
+        $user->notify(new SoclyNotification('follow', $me->name . ' vás začal/a sledovat', $me->avatar));
 
         if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'followed']);
         return back()->with('success', 'Sledujete ' . $user->name);
@@ -51,6 +54,17 @@ class FollowController extends Controller
 
         $price = $user->subscription_price ?? 0;
 
+        if ($price > 0) {
+            try {
+                app(CreditService::class)->spend($me, $price, 'subscription', 'sub_' . $user->id);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage(), 'need_credits' => true], 402);
+            }
+
+            $creatorShare = round($price * 0.80, 2);
+            app(CreditService::class)->deposit($user, $creatorShare, 'subscription_income_' . $me->id);
+        }
+
         $me->subscriptions()->attach($user->id, [
             'price' => $price,
             'expires_at' => now()->addMonth(),
@@ -67,7 +81,12 @@ class FollowController extends Controller
             message: $me->name . ' si předplatil/a váš obsah',
             avatar: $me->avatar,
         ));
+        $user->notify(new SoclyNotification('subscription', $me->name . ' si předplatil/a váš obsah', $me->avatar));
 
-        return response()->json(['success' => true, 'action' => 'subscribed']);
+        return response()->json([
+            'success' => true,
+            'action'  => 'subscribed',
+            'balance' => (float) $me->fresh()->balance,
+        ]);
     }
 }

@@ -7,6 +7,8 @@ use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
 use Inertia\Inertia;
 
 class ProfileController extends Controller
@@ -28,7 +30,7 @@ class ProfileController extends Controller
                 'image' => $p->image,
                 'locked' => $p->is_locked,
                 'isVideo' => $p->is_video,
-                'likes' => round($p->likes_count / 1000, 1),
+                'likes' => (int) $p->likes_count,
                 'comments' => $p->comments_count,
                 'liked' => $me ? $me->hasLiked($p) : false,
                 'date' => $p->created_at->locale('cs')->diffForHumans(),
@@ -102,9 +104,12 @@ class ProfileController extends Controller
             if ($user->avatar && $user->avatar !== '/images/default-avatar.svg') {
                 $this->deleteOldFile($user->avatar, $disk);
             }
-            
-            $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
-            $path = $file->storeAs('avatars', $filename, $disk);
+
+            // Sanitize: re-encode (strip EXIF), resize to max 400px square
+            $filename = Str::random(40) . '.jpg';
+            $img = Image::read($file)->scaleDown(width: 400);
+            Storage::disk($disk)->put('avatars/' . $filename, $img->toJpeg(quality: 85)->toString());
+            $path = 'avatars/' . $filename;
             $validated['avatar'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['avatar']);
@@ -123,9 +128,12 @@ class ProfileController extends Controller
             if ($user->cover_image && $user->cover_image !== '/images/default-cover.svg') {
                 $this->deleteOldFile($user->cover_image, $disk);
             }
-            
-            $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
-            $path = $file->storeAs('covers', $filename, $disk);
+
+            // Sanitize: re-encode (strip EXIF), resize to max 1200px
+            $filename = Str::random(40) . '.jpg';
+            $img = Image::read($file)->scaleDown(width: 1200);
+            Storage::disk($disk)->put('covers/' . $filename, $img->toJpeg(quality: 80)->toString());
+            $path = 'covers/' . $filename;
             $validated['cover_image'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['cover_image']);

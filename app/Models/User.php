@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -26,12 +27,9 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar',
-        'cover_image',
+        'crypto_wallet',
+        'onboarding_completed',
         'bio',
-        'is_verified',
-        'is_vip',
-        'is_creator',
-        'is_admin',
         'subscription_price',
         'date_of_birth',
         'terms_accepted_at',
@@ -62,6 +60,8 @@ class User extends Authenticatable
         'date_of_birth' => 'date',
         'terms_accepted_at' => 'datetime',
         'last_seen_at' => 'datetime',
+        'balance' => 'decimal:2',
+        'onboarding_completed' => 'boolean',
     ];
 
     // --- Relationships ---
@@ -108,6 +108,11 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'subscriptions', 'subscriber_id', 'creator_id')
             ->withPivot('price', 'expires_at')
             ->withTimestamps();
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     public function sentMessages(): HasMany

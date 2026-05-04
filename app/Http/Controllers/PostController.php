@@ -7,51 +7,76 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
 
 class PostController extends Controller
 {
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'caption' => ['nullable', 'string', 'max:2000'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240'],
+            'caption'   => ['nullable', 'string', 'max:2000'],
+            'image'     => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4,webm', 'max:102400'],
             'is_locked' => ['boolean'],
-            'price' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'price'     => ['nullable', 'integer', 'min:0', 'max:100000'],
         ], [
-            'caption.max' => 'Popis může mít maximálně 2000 znaků.',
-            'image.required' => 'Obrázek je povinný.',
-            'image.image' => 'Soubor musí být obrázek.',
-            'image.max' => 'Obrázek může mít maximálně 10 MB.',
-            'price.max' => 'Cena může být maximálně 100 000.',
+            'caption.max'   => 'Popis může mít maximálně 2000 znaků.',
+            'image.required' => 'Soubor je povinný.',
+            'image.mimes'   => 'Povolené formáty: jpg, png, webp, gif, mp4, webm.',
+            'image.max'     => 'Soubor může mít maximálně 100 MB.',
+            'price.max'     => 'Cena může být maximálně 100 000.',
         ]);
 
-        // Validate actual file extension
         $file = $request->file('image');
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
         $extension = strtolower($file->getClientOriginalExtension());
-        
-        if (!in_array($extension, $allowedExtensions)) {
-            return back()->withErrors(['image' => 'Neplatná přípona souboru.']);
-        }
-
-        // Generate secure random filename
-        $filename = Str::random(40) . '.' . $extension;
         $disk = config('filesystems.default');
-        $path = $file->storeAs('posts', $filename, $disk);
+
+        $videoExtensions = ['mp4', 'webm'];
+        $isVideo = in_array($extension, $videoExtensions);
+
+        if ($isVideo) {
+            $filename = Str::random(40) . '.' . $extension;
+            Storage::disk($disk)->put('posts/' . $filename, file_get_contents($file->getRealPath()));
+            $path = 'posts/' . $filename;
+        } else {
+            $allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            if (!in_array($extension, $allowedImageExtensions)) {
+                return back()->withErrors(['image' => 'Neplatná přípona souboru.']);
+            }
+            // Re-encode image: strips EXIF, normalizes format, resizes to max 1920px
+            $filename = Str::random(40) . '.jpg';
+            $img = Image::read($file)->scaleDown(width: 1920);
+            Storage::disk($disk)->put('posts/' . $filename, $img->toJpeg(quality: 80)->toString());
+            $path = 'posts/' . $filename;
+
+            // Generate 400px thumbnail for grid view (F4.3)
+            $thumbName = 'thumb_' . $filename;
+            $thumb = Image::read($file)->scaleDown(width: 400);
+            Storage::disk($disk)->put('posts/' . $thumbName, $thumb->toJpeg(quality: 75)->toString());
+        }
 
         $imageUrl = $disk === 'public'
             ? '/storage/' . $path
             : Storage::disk($disk)->url($path);
 
+        $thumbUrl = null;
+        if (!$isVideo && isset($thumbName)) {
+            $thumbPath = 'posts/' . $thumbName;
+            $thumbUrl = $disk === 'public'
+                ? '/storage/' . $thumbPath
+                : Storage::disk($disk)->url($thumbPath);
+        }
+
         // Sanitize caption (strip HTML tags)
         $caption = $validated['caption'] ? strip_tags($validated['caption']) : null;
 
         $post = Post::create([
-            'user_id' => Auth::id(),
-            'caption' => $caption,
-            'image' => $imageUrl,
+            'user_id'   => Auth::id(),
+            'caption'   => $caption,
+            'image'     => $imageUrl,
+            'thumbnail' => $thumbUrl,
+            'is_video'  => $isVideo,
             'is_locked' => $validated['is_locked'] ?? false,
-            'price' => $validated['price'] ?? null,
+            'price'     => $validated['price'] ?? null,
         ]);
 
         if ($request->wantsJson()) {

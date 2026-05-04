@@ -21,21 +21,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
+    <!-- Default Open Graph / Twitter meta -->
+    <meta property="og:site_name" content="SOCLY">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ config('app.url') }}">
+    <meta property="og:title" content="SOCLY — Sociální síť bez hranic">
+    <meta property="og:description" content="Sleduj, sdílej, vydělávej. Originální obsah od tvůrců bez cenzury.">
+    <meta property="og:image" content="{{ config('app.url') }}/og-default.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SOCLY">
+    <meta name="twitter:description" content="Sleduj, sdílej, vydělávej.">
+    <meta name="twitter:image" content="{{ config('app.url') }}/og-default.jpg">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @inertiaHead
 </head>
 <body class="font-sans antialiased min-h-dvh">
     @inertia
     
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('SW registered'))
-                    .catch(error => console.log('SW registration failed'));
-            });
-        }
-    </script>
 </body>
 </html>
