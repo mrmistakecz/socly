@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, useForm, router, usePage } from '@inertiajs/vue3'
-import { ChevronLeft, Camera, User, Mail, FileText, Shield, Bell, Palette, LogOut, Sparkles, Crown, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, Camera, User, Mail, FileText, Shield, Bell, Palette, LogOut, Sparkles, Crown, ChevronRight, Moon, Sun, Monitor } from 'lucide-vue-next'
+import axios from 'axios'
 
 const page = usePage()
 const user = page.props.auth.user
@@ -16,6 +17,22 @@ const form = useForm({
 const avatarPreview = ref(user.avatar)
 const coverPreview = ref(user.cover_image)
 const activeSection = ref('profile')
+const settingsToast = ref('')
+
+// Notification preferences (stored in localStorage)
+const notifMessages = ref(localStorage.getItem('notif_messages') !== 'false')
+const notifLikes = ref(localStorage.getItem('notif_likes') !== 'false')
+const notifFollows = ref(localStorage.getItem('notif_follows') !== 'false')
+const notifComments = ref(localStorage.getItem('notif_comments') !== 'false')
+const notifBrowser = ref('Notification' in window && Notification.permission === 'granted')
+
+// Privacy preferences
+const privacyOnlineStatus = ref(localStorage.getItem('privacy_online') !== 'false')
+const privacyReadReceipts = ref(localStorage.getItem('privacy_read_receipts') !== 'false')
+const privacyProfilePublic = ref(localStorage.getItem('privacy_public') !== 'false')
+
+// Appearance
+const currentTheme = ref(localStorage.getItem('theme') || 'dark')
 
 const handleAvatarChange = (e) => {
   const file = e.target.files[0]
@@ -45,6 +62,44 @@ const submit = () => {
 
 const handleLogout = () => {
   router.post('/logout')
+}
+
+const saveNotifPref = (key, value) => {
+  localStorage.setItem(key, value)
+  showToast('Nastavení uloženo')
+}
+
+const toggleBrowserNotifs = async () => {
+  if (!('Notification' in window)) return
+  
+  if (Notification.permission === 'granted') {
+    notifBrowser.value = false
+    showToast('Prohlížečové notifikace vypnuty')
+  } else if (Notification.permission === 'default') {
+    const result = await Notification.requestPermission()
+    notifBrowser.value = result === 'granted'
+    showToast(result === 'granted' ? 'Notifikace povoleny' : 'Notifikace zamítnuty')
+  } else {
+    showToast('Notifikace jsou blokovány v nastavení prohlížeče')
+  }
+}
+
+const savePrivacyPref = (key, value) => {
+  localStorage.setItem(key, value)
+  showToast('Nastavení uloženo')
+}
+
+const setTheme = (theme) => {
+  currentTheme.value = theme
+  localStorage.setItem('theme', theme)
+  document.documentElement.classList.remove('light', 'dark')
+  document.documentElement.classList.add(theme)
+  showToast('Motiv změněn')
+}
+
+const showToast = (msg) => {
+  settingsToast.value = msg
+  setTimeout(() => settingsToast.value = '', 2000)
 }
 
 const menuItems = [
@@ -186,21 +241,137 @@ const menuItems = [
       </div>
 
       <!-- Notifications Settings -->
-      <div v-if="activeSection === 'notifications'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
+      <div v-if="activeSection === 'notifications'" class="space-y-1 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Oznámení</h3>
-        <p class="text-sm text-muted-foreground">Nastavení notifikací bude brzy dostupné.</p>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Nové zprávy</p>
+            <p class="text-xs text-muted-foreground">Upozornění na příchozí zprávy</p>
+          </div>
+          <button @click="notifMessages = !notifMessages; saveNotifPref('notif_messages', notifMessages)" :class="['relative w-11 h-6 rounded-full transition-colors', notifMessages ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', notifMessages ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Líbí se</p>
+            <p class="text-xs text-muted-foreground">Když se někomu líbí váš příspěvek</p>
+          </div>
+          <button @click="notifLikes = !notifLikes; saveNotifPref('notif_likes', notifLikes)" :class="['relative w-11 h-6 rounded-full transition-colors', notifLikes ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', notifLikes ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Noví sledující</p>
+            <p class="text-xs text-muted-foreground">Když vás někdo začne sledovat</p>
+          </div>
+          <button @click="notifFollows = !notifFollows; saveNotifPref('notif_follows', notifFollows)" :class="['relative w-11 h-6 rounded-full transition-colors', notifFollows ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', notifFollows ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Komentáře</p>
+            <p class="text-xs text-muted-foreground">Nové komentáře pod vašimi příspěvky</p>
+          </div>
+          <button @click="notifComments = !notifComments; saveNotifPref('notif_comments', notifComments)" :class="['relative w-11 h-6 rounded-full transition-colors', notifComments ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', notifComments ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+
+        <div class="border-t border-border/50 pt-3 mt-2">
+          <div class="flex items-center justify-between py-3">
+            <div>
+              <p class="text-sm font-medium">Push notifikace</p>
+              <p class="text-xs text-muted-foreground">Prohlížečové push notifikace</p>
+            </div>
+            <button @click="toggleBrowserNotifs" :class="['relative w-11 h-6 rounded-full transition-colors', notifBrowser ? 'bg-primary' : 'bg-secondary']">
+              <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', notifBrowser ? 'translate-x-5' : '']" />
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Privacy Settings -->
-      <div v-if="activeSection === 'privacy'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
+      <div v-if="activeSection === 'privacy'" class="space-y-1 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Soukromí</h3>
-        <p class="text-sm text-muted-foreground">Nastavení soukromí bude brzy dostupné.</p>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Online stav</p>
+            <p class="text-xs text-muted-foreground">Zobrazovat, že jste online</p>
+          </div>
+          <button @click="privacyOnlineStatus = !privacyOnlineStatus; savePrivacyPref('privacy_online', privacyOnlineStatus)" :class="['relative w-11 h-6 rounded-full transition-colors', privacyOnlineStatus ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', privacyOnlineStatus ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Potvrzení přečtení</p>
+            <p class="text-xs text-muted-foreground">Zobrazovat, že jste přečetli zprávu</p>
+          </div>
+          <button @click="privacyReadReceipts = !privacyReadReceipts; savePrivacyPref('privacy_read_receipts', privacyReadReceipts)" :class="['relative w-11 h-6 rounded-full transition-colors', privacyReadReceipts ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', privacyReadReceipts ? 'translate-x-5' : '']" />
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium">Veřejný profil</p>
+            <p class="text-xs text-muted-foreground">Profil viditelný pro všechny uživatele</p>
+          </div>
+          <button @click="privacyProfilePublic = !privacyProfilePublic; savePrivacyPref('privacy_public', privacyProfilePublic)" :class="['relative w-11 h-6 rounded-full transition-colors', privacyProfilePublic ? 'bg-primary' : 'bg-secondary']">
+            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm', privacyProfilePublic ? 'translate-x-5' : '']" />
+          </button>
+        </div>
       </div>
 
       <!-- Appearance Settings -->
-      <div v-if="activeSection === 'appearance'" class="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/50">
+      <div v-if="activeSection === 'appearance'" class="space-y-4 p-4 rounded-2xl bg-card/50 border border-border/50">
         <h3 class="font-bold mb-4">Vzhled</h3>
-        <p class="text-sm text-muted-foreground">Tmavý motiv je aktivní. Další motivy budou brzy dostupné.</p>
+        
+        <div class="grid grid-cols-3 gap-3">
+          <button
+            @click="setTheme('dark')"
+            :class="[
+              'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+              currentTheme === 'dark' ? 'border-primary bg-primary/10' : 'border-border/50 hover:border-border'
+            ]"
+          >
+            <Moon class="w-6 h-6" />
+            <span class="text-xs font-medium">Tmavý</span>
+          </button>
+          
+          <button
+            @click="setTheme('light')"
+            :class="[
+              'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+              currentTheme === 'light' ? 'border-primary bg-primary/10' : 'border-border/50 hover:border-border'
+            ]"
+          >
+            <Sun class="w-6 h-6" />
+            <span class="text-xs font-medium">Světlý</span>
+          </button>
+          
+          <button
+            @click="setTheme('dark')"
+            :class="[
+              'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+              currentTheme === 'system' ? 'border-primary bg-primary/10' : 'border-border/50 hover:border-border'
+            ]"
+          >
+            <Monitor class="w-6 h-6" />
+            <span class="text-xs font-medium">Systém</span>
+          </button>
+        </div>
+        
+        <p class="text-xs text-muted-foreground">Světlý motiv je aktuálně ve vývoji. Doporučujeme tmavý motiv.</p>
       </div>
 
       <!-- Logout -->
@@ -215,8 +386,29 @@ const menuItems = [
       <!-- App Info -->
       <div class="text-center text-xs text-muted-foreground pb-8">
         <p>SOCLY v3.0 &middot; Premium Content Platform</p>
-        <p class="mt-1">© 2026 SOCLY. Všechna práva vyhrazena.</p>
+        <p class="mt-1">&copy; 2026 SOCLY. Všechna práva vyhrazena.</p>
       </div>
     </div>
+
+    <!-- Settings Toast -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <div v-if="settingsToast" class="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[110] px-5 py-3 bg-foreground text-background rounded-xl text-sm font-medium shadow-xl">
+          {{ settingsToast }}
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 10px);
+}
+</style>

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
-import { MessageCircle, Lock, Grid3X3, PlayCircle, Bookmark, Settings, ChevronLeft, BadgeCheck, Share2, Heart, Crown, Sparkles, Edit3 } from 'lucide-vue-next'
+import { MessageCircle, Lock, Grid3X3, PlayCircle, Bookmark, Settings, ChevronLeft, BadgeCheck, Share2, Heart, Crown, Sparkles, Edit3, X, Calendar, MapPin, Link as LinkIcon, Users, Check, CreditCard } from 'lucide-vue-next'
 
 const props = defineProps({
   profileUser: Object,
@@ -16,12 +16,21 @@ const page = usePage()
 const activeTab = ref('posts')
 const following = ref(props.isFollowing)
 const subscribed = ref(props.isSubscribed)
+const showPostModal = ref(false)
+const selectedPost = ref(null)
+const showShareMenu = ref(false)
+const shareToast = ref('')
 
-const tabs = [
-  { id: 'posts', label: 'Příspěvky', icon: Grid3X3 },
-  { id: 'videos', label: 'Videa', icon: PlayCircle },
-  { id: 'saved', label: 'Uložené', icon: Bookmark },
-]
+const tabs = computed(() => {
+  const base = [
+    { id: 'posts', label: 'Příspěvky', icon: Grid3X3 },
+    { id: 'videos', label: 'Videa', icon: PlayCircle },
+  ]
+  if (props.isOwn) {
+    base.push({ id: 'saved', label: 'Uložené', icon: Bookmark })
+  }
+  return base
+})
 
 const formatNumber = (num) => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
@@ -38,8 +47,41 @@ const handleFollow = async () => {
   }
 }
 
+const handleSubscribe = async () => {
+  if (subscribed.value) return
+  try {
+    await axios.post(`/users/${props.profileUser.id}/subscribe`)
+    subscribed.value = true
+  } catch {}
+}
+
 const handleMessage = () => {
   router.visit('/?tab=messages&chat=' + props.profileUser.id)
+}
+
+const handleShare = async () => {
+  const url = `${window.location.origin}/profile/${props.profileUser.id}`
+  const shareData = {
+    title: `${props.profileUser.name} na SOCLY`,
+    text: `Podívejte se na profil ${props.profileUser.name} na SOCLY`,
+    url,
+  }
+
+  if (navigator.share) {
+    try { await navigator.share(shareData) } catch {}
+  } else {
+    showShareMenu.value = !showShareMenu.value
+  }
+}
+
+const copyProfileLink = async () => {
+  const url = `${window.location.origin}/profile/${props.profileUser.id}`
+  try {
+    await navigator.clipboard.writeText(url)
+    shareToast.value = 'Odkaz zkopírován!'
+    showShareMenu.value = false
+    setTimeout(() => shareToast.value = '', 2000)
+  } catch {}
 }
 
 const savedPosts = ref([])
@@ -60,6 +102,24 @@ const handleTabClick = async (tabId) => {
       savedLoaded.value = true
     } catch { savedPosts.value = [] }
   }
+}
+
+const openPost = (post) => {
+  selectedPost.value = post
+  showPostModal.value = true
+}
+
+const closePostModal = () => {
+  showPostModal.value = false
+  selectedPost.value = null
+}
+
+const likePost = async (post) => {
+  try {
+    const { data } = await axios.post(`/posts/${post.id}/like`)
+    post.liked = data.liked
+    post.likes = data.liked ? post.likes + 0.001 : post.likes - 0.001
+  } catch {}
 }
 </script>
 
@@ -86,9 +146,17 @@ const handleTabClick = async (tabId) => {
             <ChevronLeft class="w-5 h-5 text-white" />
           </button>
           <div class="flex items-center gap-2">
-            <button class="w-10 h-10 rounded-xl glass flex items-center justify-center">
-              <Share2 class="w-5 h-5 text-white" />
-            </button>
+            <div class="relative">
+              <button @click="handleShare" class="w-10 h-10 rounded-xl glass flex items-center justify-center">
+                <Share2 class="w-5 h-5 text-white" />
+              </button>
+              <div v-if="showShareMenu" class="absolute right-0 top-12 w-48 bg-background border border-border/50 rounded-xl shadow-xl p-2 z-50">
+                <button @click="copyProfileLink" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg hover:bg-secondary/50 transition-colors">
+                  <LinkIcon class="w-4 h-4" />
+                  Kopírovat odkaz
+                </button>
+              </div>
+            </div>
             <button 
               v-if="isOwn"
               @click="router.visit('/settings')"
@@ -190,8 +258,43 @@ const handleTabClick = async (tabId) => {
           <h1 class="text-xl lg:text-2xl font-bold">{{ profileUser.name }}</h1>
           <BadgeCheck v-if="profileUser.verified" class="w-5 h-5 lg:w-6 lg:h-6 text-primary fill-primary/20" />
         </div>
-        <p class="text-sm text-muted-foreground mb-3">{{ profileUser.username }}</p>
-        <p v-if="profileUser.bio" class="text-sm whitespace-pre-line leading-relaxed text-foreground/85">{{ profileUser.bio }}</p>
+        <p class="text-sm text-muted-foreground mb-2">{{ profileUser.username }}</p>
+        <p v-if="profileUser.bio" class="text-sm whitespace-pre-line leading-relaxed text-foreground/85 mb-3">{{ profileUser.bio }}</p>
+        
+        <!-- Meta Info -->
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span v-if="profileUser.joinedAt" class="flex items-center gap-1">
+            <Calendar class="w-3.5 h-3.5" />
+            Člen od {{ profileUser.joinedAt }}
+          </span>
+          <span v-if="profileUser.location" class="flex items-center gap-1">
+            <MapPin class="w-3.5 h-3.5" />
+            {{ profileUser.location }}
+          </span>
+          <span v-if="profileUser.following" class="flex items-center gap-1">
+            <Users class="w-3.5 h-3.5" />
+            <b class="text-foreground">{{ formatNumber(profileUser.following) }}</b> sleduje
+          </span>
+        </div>
+      </div>
+
+      <!-- Subscription CTA for creators -->
+      <div v-if="!isOwn && profileUser.isCreator && profileUser.subscriptionPrice > 0 && !subscribed" class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-primary/10 via-pink-500/10 to-accent/10 border border-primary/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="font-bold text-sm">Předplatné</p>
+            <p class="text-xs text-muted-foreground">Přístup ke všem exkluzivním příspěvkům</p>
+          </div>
+          <button @click="handleSubscribe" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-pink-500 text-white rounded-xl text-sm font-bold btn-premium">
+            <CreditCard class="w-4 h-4" />
+            {{ profileUser.subscriptionPrice }} Kč/měs
+          </button>
+        </div>
+      </div>
+
+      <div v-if="subscribed && !isOwn" class="mb-6 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-sm font-medium">
+        <Check class="w-4 h-4" />
+        Aktivní předplatné
       </div>
 
       <!-- Mobile Action Buttons -->
@@ -251,6 +354,7 @@ const handleTabClick = async (tabId) => {
       <button 
         v-for="item in filteredPosts" 
         :key="item.id" 
+        @click="openPost(item)"
         class="relative aspect-square bg-secondary/20 overflow-hidden group"
       >
         <img
@@ -289,5 +393,91 @@ const handleTabClick = async (tabId) => {
       <p class="text-lg font-semibold mb-1">Zatím žádné příspěvky</p>
       <p class="text-sm text-muted-foreground">Příspěvky se zobrazí zde</p>
     </div>
+
+    <!-- Post Detail Modal -->
+    <Teleport to="body">
+      <div v-if="showPostModal && selectedPost" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="closePostModal" />
+        <div class="relative w-full max-w-lg mx-4 bg-background rounded-2xl overflow-hidden shadow-2xl border border-border/50 max-h-[90vh] flex flex-col">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <div class="flex items-center gap-3">
+              <img :src="profileUser.avatar || '/images/default-avatar.svg'" class="w-8 h-8 rounded-lg object-cover" />
+              <div>
+                <div class="flex items-center gap-1">
+                  <span class="text-sm font-semibold">{{ profileUser.name }}</span>
+                  <BadgeCheck v-if="profileUser.verified" class="w-3.5 h-3.5 text-primary fill-primary/20" />
+                </div>
+                <p class="text-[10px] text-muted-foreground">{{ selectedPost.date || '' }}</p>
+              </div>
+            </div>
+            <button @click="closePostModal" class="p-2 rounded-xl hover:bg-secondary/50 transition-colors">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          
+          <!-- Modal Image -->
+          <div class="relative overflow-hidden">
+            <img 
+              :src="selectedPost.image" 
+              :alt="`Post ${selectedPost.id}`"
+              :class="[
+                'w-full max-h-[60vh] object-contain bg-black',
+                selectedPost.locked && !subscribed && !isOwn ? 'blur-xl scale-110' : ''
+              ]"
+            />
+            <div v-if="selectedPost.locked && !subscribed && !isOwn" class="absolute inset-0 flex items-center justify-center bg-black/30">
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl glass flex items-center justify-center">
+                  <Lock class="w-7 h-7 text-primary" />
+                </div>
+                <p class="text-white text-sm font-semibold">Exkluzivní obsah</p>
+                <button v-if="profileUser.subscriptionPrice" @click="handleSubscribe" class="px-5 py-2 bg-primary text-white rounded-xl text-sm font-bold btn-premium">
+                  Odblokovat za {{ profileUser.subscriptionPrice }} Kč/měs
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="px-4 py-3 border-t border-border/50">
+            <div class="flex items-center gap-4">
+              <button @click="likePost(selectedPost)" class="flex items-center gap-1.5 text-sm transition-colors" :class="selectedPost.liked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'">
+                <Heart :class="['w-5 h-5', selectedPost.liked ? 'fill-red-500' : '']" />
+                <span class="font-medium">{{ selectedPost.likes }}K</span>
+              </button>
+              <button class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <MessageCircle class="w-5 h-5" />
+                <span class="font-medium">{{ selectedPost.comments || 0 }}</span>
+              </button>
+              <button class="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+                <Bookmark class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Share Toast -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <div v-if="shareToast" class="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[110] px-5 py-3 bg-foreground text-background rounded-xl text-sm font-medium shadow-xl">
+          {{ shareToast }}
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 10px);
+}
+</style>

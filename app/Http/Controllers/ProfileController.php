@@ -29,6 +29,9 @@ class ProfileController extends Controller
                 'locked' => $p->is_locked,
                 'isVideo' => $p->is_video,
                 'likes' => round($p->likes_count / 1000, 1),
+                'comments' => $p->comments_count,
+                'liked' => $me ? $me->hasLiked($p) : false,
+                'date' => $p->created_at->locale('cs')->diffForHumans(),
             ]);
 
         return Inertia::render('Profile', [
@@ -47,6 +50,7 @@ class ProfileController extends Controller
                 'verified' => $user->is_verified,
                 'isVIP' => $user->is_vip,
                 'isCreator' => $user->is_creator,
+                'joinedAt' => $user->created_at->locale('cs')->isoFormat('MMMM YYYY'),
             ],
             'posts' => $posts,
             'isFollowing' => $me ? $me->isFollowing($user) : false,
