@@ -43,8 +43,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/bookmark', [WallController::class, 'bookmark'])->middleware('throttle:60,1')->name('posts.bookmark');
     Route::post('/posts/{post}/comment', [WallController::class, 'comment'])->middleware('throttle:30,1')->name('posts.comment');
 
-    // Follow
+    // Follow & Subscribe
     Route::post('/users/{user}/follow', [FollowController::class, 'toggle'])->middleware('throttle:30,1')->name('users.follow');
+    Route::post('/users/{user}/subscribe', [FollowController::class, 'subscribe'])->middleware('throttle:10,1')->name('users.subscribe');
 
     // Messages
     Route::get('/messages/{user}', [MessageController::class, 'show'])->middleware('throttle:60,1')->name('messages.show');

@@ -20,6 +20,8 @@ const showPostModal = ref(false)
 const selectedPost = ref(null)
 const showShareMenu = ref(false)
 const shareToast = ref('')
+const followersCount = ref(props.profileUser.followers)
+const postsCount = ref(props.profileUser.posts_count)
 
 const tabs = computed(() => {
   const base = [
@@ -40,10 +42,12 @@ const formatNumber = (num) => {
 
 const handleFollow = async () => {
   following.value = !following.value
+  followersCount.value += following.value ? 1 : -1
   try {
     await axios.post(`/users/${props.profileUser.id}/follow`)
   } catch {
     following.value = !following.value
+    followersCount.value += following.value ? 1 : -1
   }
 }
 
@@ -115,11 +119,27 @@ const closePostModal = () => {
 }
 
 const likePost = async (post) => {
+  post.liked = !post.liked
+  post.likesRaw = (post.likesRaw || 0) + (post.liked ? 1 : -1)
   try {
-    const { data } = await axios.post(`/posts/${post.id}/like`)
-    post.liked = data.liked
-    post.likes = data.liked ? post.likes + 0.001 : post.likes - 0.001
-  } catch {}
+    await axios.post(`/posts/${post.id}/like`)
+  } catch {
+    post.liked = !post.liked
+    post.likesRaw = (post.likesRaw || 0) + (post.liked ? 1 : -1)
+  }
+}
+
+const bookmarkPost = async (post) => {
+  post.bookmarked = !post.bookmarked
+  try {
+    await axios.post(`/posts/${post.id}/bookmark`)
+  } catch {
+    post.bookmarked = !post.bookmarked
+  }
+}
+
+const closeShareMenu = (e) => {
+  if (showShareMenu.value) showShareMenu.value = false
 }
 </script>
 
@@ -198,7 +218,7 @@ const likePost = async (post) => {
             <p class="text-sm text-muted-foreground">Příspěvků</p>
           </div>
           <div class="text-center">
-            <p class="text-2xl font-bold">{{ formatNumber(profileUser.followers) }}</p>
+            <p class="text-2xl font-bold">{{ formatNumber(followersCount) }}</p>
             <p class="text-sm text-muted-foreground">Odběratelů</p>
           </div>
           <div class="text-center">
@@ -243,7 +263,7 @@ const likePost = async (post) => {
           <p class="text-xs text-muted-foreground">Příspěvků</p>
         </div>
         <div class="text-center">
-          <p class="text-lg font-bold">{{ formatNumber(profileUser.followers) }}</p>
+          <p class="text-lg font-bold">{{ formatNumber(followersCount) }}</p>
           <p class="text-xs text-muted-foreground">Odběratelů</p>
         </div>
         <div class="text-center">
@@ -443,15 +463,15 @@ const likePost = async (post) => {
           <div class="px-4 py-3 border-t border-border/50">
             <div class="flex items-center gap-4">
               <button @click="likePost(selectedPost)" class="flex items-center gap-1.5 text-sm transition-colors" :class="selectedPost.liked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'">
-                <Heart :class="['w-5 h-5', selectedPost.liked ? 'fill-red-500' : '']" />
+                <Heart :class="['w-5 h-5 transition-transform', selectedPost.liked ? 'fill-red-500 scale-110' : '']" />
                 <span class="font-medium">{{ selectedPost.likes }}K</span>
               </button>
               <button class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <MessageCircle class="w-5 h-5" />
                 <span class="font-medium">{{ selectedPost.comments || 0 }}</span>
               </button>
-              <button class="ml-auto text-muted-foreground hover:text-foreground transition-colors">
-                <Bookmark class="w-5 h-5" />
+              <button @click="bookmarkPost(selectedPost)" :class="['ml-auto transition-colors', selectedPost.bookmarked ? 'text-primary' : 'text-muted-foreground hover:text-foreground']">
+                <Bookmark :class="['w-5 h-5', selectedPost.bookmarked ? 'fill-current' : '']" />
               </button>
             </div>
           </div>
