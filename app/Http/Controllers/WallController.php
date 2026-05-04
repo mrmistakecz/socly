@@ -209,19 +209,25 @@ class WallController extends Controller
     public function like(Request $request, Post $post)
     {
         $user = Auth::user();
-        $existing = $user->likes()->where('post_id', $post->id)->first();
+        
+        // Use firstOrCreate to prevent race conditions
+        $like = $user->likes()->where('post_id', $post->id)->first();
 
-        if ($existing) {
-            $existing->delete();
+        if ($like) {
+            // Unlike
+            $like->delete();
             $post->decrement('likes_count');
-            broadcast(new PostInteraction($post->id, 'likes', $post->likes_count - 1))->toOthers();
-            if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'unliked']);
+            $newCount = $post->fresh()->likes_count;
+            broadcast(new PostInteraction($post->id, 'likes', $newCount))->toOthers();
+            if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'unliked', 'count' => $newCount]);
             return back();
         }
 
-        $user->likes()->create(['post_id' => $post->id]);
+        // Like - use firstOrCreate to prevent duplicates
+        $user->likes()->firstOrCreate(['post_id' => $post->id]);
         $post->increment('likes_count');
-        broadcast(new PostInteraction($post->id, 'likes', $post->likes_count + 1))->toOthers();
+        $newCount = $post->fresh()->likes_count;
+        broadcast(new PostInteraction($post->id, 'likes', $newCount))->toOthers();
 
         if ($post->user_id !== $user->id) {
             broadcast(new NewNotification(
@@ -233,7 +239,7 @@ class WallController extends Controller
             ));
         }
 
-        if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'liked']);
+        if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'liked', 'count' => $newCount]);
         return back();
     }
 
@@ -248,7 +254,8 @@ class WallController extends Controller
             return back();
         }
 
-        $user->bookmarks()->create(['post_id' => $post->id]);
+        // Use firstOrCreate to prevent race conditions
+        $user->bookmarks()->firstOrCreate(['post_id' => $post->id]);
         
         if ($request->wantsJson()) return response()->json(['success' => true, 'action' => 'bookmarked']);
         return back();
@@ -262,13 +269,17 @@ class WallController extends Controller
 
         $user = Auth::user();
 
+        // Sanitize comment body
+        $body = strip_tags($validated['body']);
+
         $post->comments()->create([
             'user_id' => $user->id,
-            'body' => $validated['body'],
+            'body' => $body,
         ]);
 
         $post->increment('comments_count');
-        broadcast(new PostInteraction($post->id, 'comments', $post->comments_count + 1))->toOthers();
+        $newCount = $post->fresh()->comments_count;
+        broadcast(new PostInteraction($post->id, 'comments', $newCount))->toOthers();
 
         if ($post->user_id !== $user->id) {
             broadcast(new NewNotification(

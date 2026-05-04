@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send, ArrowLeft, MoreVertical, Edit3, Trash2, Smile, Paperclip, Mic } from 'lucide-vue-next'
+import { Search, CheckCheck, Image as ImageIcon, Video, Sparkles, Crown, BadgeCheck, ChevronRight, Send, ArrowLeft, MoreVertical, Edit3, Trash2, Smile, Paperclip, Mic, MessageCircle } from 'lucide-vue-next'
 import axios from 'axios'
 import { useRealtime } from '@/composables/useRealtime'
 

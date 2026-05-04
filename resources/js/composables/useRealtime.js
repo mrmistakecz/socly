@@ -36,8 +36,27 @@ export function useRealtime() {
         // Private channel — messages & notifications
         privateChannel = window.Echo.private(`user.${userId()}`)
 
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission()
+        }
+
         privateChannel.listen('NewMessage', (e) => {
             incomingMessage.value = e
+            
+            // Show browser notification if tab is not focused
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                const n = new Notification(e.sender_name || 'Nová zpráva', {
+                    body: e.body?.substring(0, 100) || 'Máte novou zprávu',
+                    icon: e.sender_avatar || '/favicon.svg',
+                    tag: `msg-${e.sender_id}`,
+                    data: { url: '/?screen=messages&chat=' + e.sender_id },
+                })
+                n.onclick = () => {
+                    window.focus()
+                    n.close()
+                }
+            }
         })
 
         privateChannel.listen('NewNotification', (e) => {
@@ -46,6 +65,19 @@ export function useRealtime() {
                 id: Date.now(),
                 read: false,
             })
+            
+            // Show browser notification if tab is not focused
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                const n = new Notification('SOCLY', {
+                    body: e.message || 'Máte novou notifikaci',
+                    icon: '/favicon.svg',
+                    tag: `notif-${Date.now()}`,
+                })
+                n.onclick = () => {
+                    window.focus()
+                    n.close()
+                }
+            }
         })
 
         // Public channel — post interactions (likes/comments counts)

@@ -69,30 +69,59 @@ class ProfileController extends Controller
             'bio' => ['nullable', 'string', 'max:500'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'subscription_price' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ], [
             'name.required' => 'Jméno je povinné.',
             'bio.max' => 'Bio může mít maximálně 500 znaků.',
             'avatar.max' => 'Avatar může mít maximálně 2 MB.',
             'cover_image.max' => 'Cover fotka může mít maximálně 4 MB.',
+            'subscription_price.max' => 'Cena předplatného může být maximálně 100 000.',
         ]);
+
+        // Sanitize bio (strip HTML tags)
+        if (isset($validated['bio'])) {
+            $validated['bio'] = strip_tags($validated['bio']);
+        }
 
         $disk = config('filesystems.default');
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
+            // Validate file extension
+            $file = $request->file('avatar');
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            if (!in_array($extension, $allowedExtensions)) {
+                return back()->withErrors(['avatar' => 'Neplatná přípona souboru.']);
+            }
+
+            if ($user->avatar && $user->avatar !== '/images/default-avatar.svg') {
                 $this->deleteOldFile($user->avatar, $disk);
             }
-            $path = $request->file('avatar')->store('avatars', $disk);
+            
+            $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
+            $path = $file->storeAs('avatars', $filename, $disk);
             $validated['avatar'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['avatar']);
         }
 
         if ($request->hasFile('cover_image')) {
-            if ($user->cover_image) {
+            // Validate file extension
+            $file = $request->file('cover_image');
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            if (!in_array($extension, $allowedExtensions)) {
+                return back()->withErrors(['cover_image' => 'Neplatná přípona souboru.']);
+            }
+
+            if ($user->cover_image && $user->cover_image !== '/images/default-cover.svg') {
                 $this->deleteOldFile($user->cover_image, $disk);
             }
-            $path = $request->file('cover_image')->store('covers', $disk);
+            
+            $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
+            $path = $file->storeAs('covers', $filename, $disk);
             $validated['cover_image'] = $disk === 'public' ? '/storage/' . $path : Storage::disk($disk)->url($path);
         } else {
             unset($validated['cover_image']);

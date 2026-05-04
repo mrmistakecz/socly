@@ -25,10 +25,13 @@ class MessageController extends Controller
             return back()->with('error', 'Nemůžete poslat zprávu sami sobě.');
         }
 
+        // Sanitize message body (strip HTML tags)
+        $body = strip_tags($validated['body']);
+
         $message = Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'],
-            'body' => $validated['body'],
+            'body' => $body,
         ]);
 
         broadcast(new NewMessage($message))->toOthers();
@@ -41,11 +44,12 @@ class MessageController extends Controller
     {
         $validated = $request->validate([
             'receiver_id' => ['required', 'exists:users,id'],
-            'file' => ['required', 'file', 'max:10240'], // 10MB max
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,mp4,webm,pdf,doc,docx', 'max:10240'], // 10MB max
             'body' => ['nullable', 'string', 'max:2000'],
         ], [
             'file.required' => 'Soubor je povinný.',
             'file.max' => 'Soubor může mít maximálně 10MB.',
+            'file.mimes' => 'Nepovolený typ souboru.',
             'body.max' => 'Zpráva může mít maximálně 2000 znaků.',
         ]);
 
@@ -57,16 +61,32 @@ class MessageController extends Controller
         }
 
         $file = $request->file('file');
-        $filename = time() . '_' . $file->getClientOriginalName();
+        
+        // Validate file extension
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'pdf', 'doc', 'docx'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Neplatná přípona souboru.'], 400);
+            }
+            return back()->withErrors(['file' => 'Neplatná přípona souboru.']);
+        }
+        
+        // Generate secure random filename
+        $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
         
         // Store file in public storage
         $path = $file->storeAs('messages', $filename, 'public');
         $url = asset('storage/' . $path);
 
+        // Sanitize message body if present
+        $body = isset($validated['body']) ? strip_tags($validated['body']) : '';
+
         $message = Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'],
-            'body' => $validated['body'] ?? '',
+            'body' => $body,
             'media' => $url,
         ]);
 
@@ -191,8 +211,11 @@ class MessageController extends Controller
             'body' => ['required', 'string', 'max:2000'],
         ]);
 
+        // Sanitize message body
+        $body = strip_tags($validated['body']);
+
         $message->update([
-            'body' => $validated['body'],
+            'body' => $body,
             'edited_at' => now(),
         ]);
 
@@ -243,17 +266,21 @@ class MessageController extends Controller
             return back()->with('error', 'Nemůžete reagovat na tuto zprávu.');
         }
 
-        // Remove existing reaction by this user for this message
-        MessageReaction::where('message_id', $message->id)
-            ->where('user_id', $user->id)
-            ->delete();
+        // Use firstOrCreate to prevent race conditions
+        $reaction = MessageReaction::firstOrCreate(
+            [
+                'message_id' => $message->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'emoji' => $validated['emoji'],
+            ]
+        );
 
-        // Add new reaction
-        $reaction = MessageReaction::create([
-            'message_id' => $message->id,
-            'user_id' => $user->id,
-            'emoji' => $validated['emoji'],
-        ]);
+        // If reaction already existed, update the emoji
+        if (!$reaction->wasRecentlyCreated && $reaction->emoji !== $validated['emoji']) {
+            $reaction->update(['emoji' => $validated['emoji']]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'reaction' => $reaction]);

@@ -2712,6 +2712,7 @@ namespace App\Models {
   /**
    * App\Models\User
    *
+   * @property \Illuminate\Support\Carbon|null $last_seen_at
    * @property boolean $is_admin
    * @property \Illuminate\Support\Carbon|null $terms_accepted_at
    * @property \Illuminate\Support\Carbon|null $date_of_birth
@@ -2772,6 +2773,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereDateOfBirth($value)
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereTermsAcceptedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereIsAdmin($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<User>|User whereLastSeenAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<User>|User query()
