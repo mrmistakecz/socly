@@ -380,6 +380,7 @@ const closeShareMenu = (e) => {
         <img
           :src="item.image"
           :alt="`Post ${item.id}`"
+          loading="lazy"
           :class="[
             'w-full h-full object-cover transition-all duration-300 group-hover:scale-105',
             item.locked && !subscribed && !isOwn ? 'blur-xl scale-110' : ''
@@ -389,7 +390,7 @@ const closeShareMenu = (e) => {
         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
           <div class="flex items-center gap-1 text-white">
             <Heart class="w-5 h-5 fill-white" />
-            <span class="font-bold">{{ item.likes }}K</span>
+            <span class="font-bold">{{ item.likes }}</span>
           </div>
         </div>
         
@@ -436,11 +437,14 @@ const closeShareMenu = (e) => {
             </button>
           </div>
           
-          <!-- Modal Image -->
+          <!-- Modal Image / Video -->
           <div class="relative overflow-hidden">
+            <video v-if="selectedPost.isVideo && !(selectedPost.locked && !subscribed && !isOwn)" :src="selectedPost.image" class="w-full max-h-[60vh] object-contain bg-black" controls playsinline />
             <img 
+              v-else
               :src="selectedPost.image" 
               :alt="`Post ${selectedPost.id}`"
+              loading="lazy"
               :class="[
                 'w-full max-h-[60vh] object-contain bg-black',
                 selectedPost.locked && !subscribed && !isOwn ? 'blur-xl scale-110' : ''

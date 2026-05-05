@@ -122,6 +122,39 @@ class WalletController extends Controller
         ]);
     }
 
+    public function tip(Request $request, \App\Models\User $user)
+    {
+        $request->validate([
+            'amount' => ['required', 'integer', 'min:10', 'max:50000'],
+        ]);
+
+        $me = Auth::user();
+
+        if ($me->id === $user->id) {
+            return response()->json(['error' => 'Nemůžete dát tip sám sobě.'], 400);
+        }
+
+        try {
+            app(CreditService::class)->spend($me, $request->amount, 'tip', 'tip_user_' . $user->id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 402);
+        }
+
+        $creatorShare = round($request->amount * 0.80, 2);
+        app(CreditService::class)->deposit($user, $creatorShare, 'tip_from_' . $me->id);
+
+        broadcast(new \App\Events\NewNotification(
+            $user->id, 'tip',
+            $me->name . ' vám poslal tip ' . $request->amount . ' kreditů',
+            $me->avatar
+        ))->toOthers();
+
+        return response()->json([
+            'success' => true,
+            'balance' => (float) $me->fresh()->balance,
+        ]);
+    }
+
     public function updateWallet(Request $request)
     {
         $request->validate([

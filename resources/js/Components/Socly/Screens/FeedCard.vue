@@ -31,6 +31,7 @@ const props = defineProps({
   timeAgo: String,
   realtimeUpdate: { type: Object, default: null },
   recentComments: { type: Array, default: () => [] },
+  isVideo: { type: Boolean, default: false },
 })
 
 const page = usePage()
@@ -162,9 +163,12 @@ const handleDelete = async () => {
       class="relative aspect-[4/5] bg-secondary/30 cursor-pointer overflow-hidden"
       @dblclick="handleDoubleTap"
     >
+      <video v-if="isVideo && !isLocked" :src="image" class="w-full h-full object-cover" controls playsinline preload="metadata" />
       <img
+        v-else
         :src="image"
         alt="Post"
+        loading="lazy"
         :class="[
           'w-full h-full object-cover transition-all duration-300',
           isLocked ? 'blur-xl scale-105' : ''
@@ -243,7 +247,7 @@ const handleDelete = async () => {
         <!-- Comment List -->
         <div v-if="localComments.length" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
           <div v-for="c in localComments" :key="c.id" class="flex items-start gap-2">
-            <img :src="c.user?.avatar || '/images/default-avatar.svg'" class="w-7 h-7 rounded-lg object-cover flex-shrink-0 mt-0.5" />
+            <img :src="c.user?.avatar || '/images/default-avatar.svg'" class="w-7 h-7 rounded-lg object-cover flex-shrink-0 mt-0.5" loading="lazy" />
             <div class="flex-1 min-w-0">
               <p class="text-sm"><span class="font-semibold mr-1">{{ c.user?.name }}</span><span class="text-muted-foreground">{{ c.body }}</span></p>
               <p class="text-[10px] text-muted-foreground">{{ c.timeAgo }}</p>

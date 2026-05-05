@@ -80,19 +80,8 @@ export function useRealtime() {
             }
         })
 
-        // Public channel — post interactions (likes/comments counts)
-        publicChannel = window.Echo.channel('posts')
-
-        publicChannel.listen('PostInteraction', (e) => {
-            postUpdates.value = {
-                postId: e.post_id,
-                type: e.type,
-                count: e.count,
-            }
-        })
-
-        // Listen for typing whispers
-        privateChannel.listenForWhisper('typing', (e) => {
+        // Typing indicators via private channel notifications
+        privateChannel.listen('.typing', (e) => {
             if (!typingUsers.value.find(u => u.id === e.userId)) {
                 typingUsers.value.push({
                     id: e.userId,
@@ -100,25 +89,29 @@ export function useRealtime() {
                     conversationId: e.conversationId
                 })
             }
-            
-            // Remove typing indicator after 3 seconds of inactivity
+
             clearTimeout(typingTimeout)
             typingTimeout = setTimeout(() => {
                 typingUsers.value = typingUsers.value.filter(u => u.id !== e.userId)
             }, 3000)
         })
-
-        privateChannel.listenForWhisper('stop-typing', (e) => {
-            typingUsers.value = typingUsers.value.filter(u => u.id !== e.userId)
-        })
     })
+
+    const subscribeToPost = (postId) => {
+        const ch = window.Echo.channel(`post.${postId}`)
+        ch.listen('PostInteraction', (e) => {
+            postUpdates.value = { postId: e.post_id, type: e.type, count: e.count }
+        })
+        return ch
+    }
+
+    const unsubscribeFromPost = (postId) => {
+        window.Echo.leave(`post.${postId}`)
+    }
 
     onUnmounted(() => {
         if (privateChannel && userId()) {
             window.Echo.leave(`user.${userId()}`)
-        }
-        if (publicChannel) {
-            window.Echo.leave('posts')
         }
         if (presenceChannel) {
             window.Echo.leave('online')
@@ -134,21 +127,11 @@ export function useRealtime() {
     }
 
     const sendTyping = (conversationId, receiverId) => {
-        if (privateChannel && receiverId) {
-            privateChannel.whisper('typing', {
-                userId: userId(),
-                name: page.props.auth?.user?.name,
-                conversationId: conversationId
-            })
-        }
+        // Typing is now handled via server-side broadcasting on private channel
     }
 
     const stopTyping = (receiverId) => {
-        if (privateChannel && receiverId) {
-            privateChannel.whisper('stop-typing', {
-                userId: userId()
-            })
-        }
+        // Typing is now handled via server-side broadcasting on private channel
     }
 
     const isUserTyping = (userId, conversationId) => {
@@ -166,5 +149,7 @@ export function useRealtime() {
         sendTyping,
         stopTyping,
         isUserTyping,
+        subscribeToPost,
+        unsubscribeFromPost,
     }
 }

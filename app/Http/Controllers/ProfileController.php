@@ -6,10 +6,13 @@ use App\Models\User;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Intervention\Image\Laravel\Facades\Image;
 use Inertia\Inertia;
+use ZipArchive;
 
 class ProfileController extends Controller
 {
@@ -149,6 +152,66 @@ class ProfileController extends Controller
         return Inertia::render('Settings', [
             'user' => Auth::user(),
         ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+        ], [
+            'current_password.current_password' => 'Současné heslo není správné.',
+            'password.min' => 'Heslo musí mít alespoň 8 znaků.',
+            'password.mixedCase' => 'Heslo musí obsahovat velká i malá písmena.',
+            'password.numbers' => 'Heslo musí obsahovat alespoň jedno číslo.',
+        ]);
+
+        $request->user()->update(['password' => Hash::make($request->password)]);
+        return back()->with('success', 'Heslo bylo změněno.');
+    }
+
+    public function updateEmail(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'email' => ['required', 'email', 'unique:users,email,' . Auth::id()],
+        ], [
+            'current_password.current_password' => 'Současné heslo není správné.',
+            'email.unique' => 'Tento email je již používán.',
+        ]);
+
+        $user = Auth::user();
+        $user->pending_email = $request->email;
+        $user->save();
+        $user->sendEmailVerificationNotification();
+
+        return back()->with('success', 'Na nový email byl odeslán ověřovací odkaz. Po ověření bude email změněn.');
+    }
+
+    public function exportData()
+    {
+        $user = Auth::user();
+        $zip = new ZipArchive;
+        $zipPath = storage_path('app/tmp/export_' . $user->id . '.zip');
+        @mkdir(dirname($zipPath), 0755, true);
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Nepodařilo se vytvořit export.');
+        }
+
+        $profile = $user->only(['name', 'username', 'email', 'bio', 'created_at']);
+        $zip->addFromString('profile.json', json_encode($profile, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        $posts = $user->posts()->get()->map(fn($p) => $p->only(['id', 'caption', 'image', 'is_locked', 'is_video', 'created_at']));
+        $zip->addFromString('posts.json', json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        $messages = \App\Models\Message::where('sender_id', $user->id)->orWhere('receiver_id', $user->id)->get()
+            ->map(fn($m) => $m->only(['id', 'sender_id', 'receiver_id', 'body', 'media', 'created_at']));
+        $zip->addFromString('messages.json', json_encode($messages, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        $zip->close();
+
+        return response()->download($zipPath, 'socly-export-' . $user->username . '.zip')->deleteFileAfterSend();
     }
 
     private function deleteOldFile(string $url, string $disk): void

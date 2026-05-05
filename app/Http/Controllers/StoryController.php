@@ -85,6 +85,23 @@ class StoryController extends Controller
         return response()->json(['success' => true, 'story' => $story]);
     }
 
+    public function view(Story $story)
+    {
+        $userId = Auth::id();
+
+        if ($story->user_id === $userId) {
+            return response()->json(['viewed' => true]);
+        }
+
+        \DB::table('story_views')->insertOrIgnore([
+            'story_id'  => $story->id,
+            'user_id'   => $userId,
+            'viewed_at' => now(),
+        ]);
+
+        return response()->json(['viewed' => true]);
+    }
+
     public function destroy(Story $story)
     {
         if ($story->user_id !== Auth::id()) {

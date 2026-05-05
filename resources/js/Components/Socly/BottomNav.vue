@@ -32,7 +32,7 @@ const handleTabChange = (tabId) => {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 z-50 pb-safe lg:hidden">
+  <nav class="fixed bottom-0 left-0 right-0 z-50 pb-safe lg:hidden" role="navigation" aria-label="Hlavní navigace">
     <div class="mx-3 mb-3">
       <div class="glass-nav rounded-2xl border border-border/20 shadow-lg shadow-black/20">
         <div class="flex items-center justify-around py-2 px-2">
@@ -41,6 +41,7 @@ const handleTabChange = (tabId) => {
               v-if="item.id === 'add'"
               @click="handleTabChange(item.id)"
               class="relative -mt-7"
+              aria-label="Vytvořit příspěvek"
             >
               <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-pink-500 to-accent flex items-center justify-center glow-primary-intense btn-premium">
                 <Plus class="w-7 h-7 text-white" stroke-width="2.5" />
@@ -50,6 +51,8 @@ const handleTabChange = (tabId) => {
             <button
               v-else
               @click="handleTabChange(item.id)"
+              :aria-label="item.label"
+              :aria-current="activeTab === item.id ? 'page' : undefined"
               :class="[
                 'relative flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all',
                 activeTab === item.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'

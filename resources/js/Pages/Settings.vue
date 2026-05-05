@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, useForm, router, usePage } from '@inertiajs/vue3'
-import { ChevronLeft, Camera, User, Mail, FileText, Shield, Bell, Palette, LogOut, Sparkles, Crown, ChevronRight, Moon, Sun, Monitor } from 'lucide-vue-next'
+import { ChevronLeft, Camera, User, Mail, FileText, Shield, Bell, Palette, LogOut, Sparkles, Crown, ChevronRight, Moon, Sun, Monitor, Lock, Download } from 'lucide-vue-next'
 import axios from 'axios'
 
 const page = usePage()
@@ -102,8 +102,52 @@ const showToast = (msg) => {
   setTimeout(() => settingsToast.value = '', 2000)
 }
 
+const passwordForm = useForm({
+  current_password: '',
+  password: '',
+  password_confirmation: '',
+})
+
+const emailForm = useForm({
+  current_password: '',
+  email: '',
+})
+
+const exporting = ref(false)
+
+const submitPassword = () => {
+  passwordForm.put('/settings/password', {
+    preserveScroll: true,
+    onSuccess: () => {
+      passwordForm.reset()
+      showToast('Heslo bylo změněno')
+    },
+  })
+}
+
+const submitEmail = () => {
+  emailForm.put('/settings/email', {
+    preserveScroll: true,
+    onSuccess: () => {
+      emailForm.reset()
+      showToast('Ověřovací email odeslán')
+    },
+  })
+}
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    window.location.href = '/settings/export'
+    showToast('Export se stahuje...')
+  } finally {
+    setTimeout(() => exporting.value = false, 3000)
+  }
+}
+
 const menuItems = [
   { id: 'profile', icon: User, label: 'Upravit profil', description: 'Jméno, bio, avatar' },
+  { id: 'security', icon: Lock, label: 'Zabezpečení', description: 'Heslo a email' },
   { id: 'notifications', icon: Bell, label: 'Oznámení', description: 'Nastavení notifikací' },
   { id: 'privacy', icon: Shield, label: 'Soukromí', description: 'Viditelnost profilu' },
   { id: 'appearance', icon: Palette, label: 'Vzhled', description: 'Motiv aplikace' },
@@ -238,6 +282,51 @@ const menuItems = [
         >
           {{ form.processing ? 'Ukládání...' : 'Uložit změny' }}
         </button>
+      </div>
+
+      <!-- Security Settings -->
+      <div v-if="activeSection === 'security'" class="space-y-5 p-4 rounded-2xl bg-card/50 border border-border/50">
+        <h3 class="font-bold">Zabezpečení</h3>
+
+        <!-- Change Password -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Změna hesla</h4>
+          <input v-model="passwordForm.current_password" type="password" placeholder="Současné heslo" class="w-full px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all" />
+          <p v-if="passwordForm.errors.current_password" class="text-xs text-destructive">{{ passwordForm.errors.current_password }}</p>
+          <input v-model="passwordForm.password" type="password" placeholder="Nové heslo" class="w-full px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all" />
+          <p v-if="passwordForm.errors.password" class="text-xs text-destructive">{{ passwordForm.errors.password }}</p>
+          <input v-model="passwordForm.password_confirmation" type="password" placeholder="Potvrdit nové heslo" class="w-full px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all" />
+          <button @click="submitPassword" :disabled="passwordForm.processing" class="w-full py-3 rounded-xl bg-primary text-white font-semibold text-sm disabled:opacity-50 transition-all">
+            {{ passwordForm.processing ? 'Ukládám...' : 'Změnit heslo' }}
+          </button>
+        </div>
+
+        <div class="border-t border-border/50" />
+
+        <!-- Change Email -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Změna emailu</h4>
+          <p class="text-xs text-muted-foreground">Aktuální: <span class="text-foreground">{{ user.email }}</span></p>
+          <input v-model="emailForm.current_password" type="password" placeholder="Současné heslo" class="w-full px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all" />
+          <p v-if="emailForm.errors.current_password" class="text-xs text-destructive">{{ emailForm.errors.current_password }}</p>
+          <input v-model="emailForm.email" type="email" placeholder="Nový email" class="w-full px-4 py-3 bg-secondary/50 border border-border/50 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all" />
+          <p v-if="emailForm.errors.email" class="text-xs text-destructive">{{ emailForm.errors.email }}</p>
+          <button @click="submitEmail" :disabled="emailForm.processing" class="w-full py-3 rounded-xl bg-primary text-white font-semibold text-sm disabled:opacity-50 transition-all">
+            {{ emailForm.processing ? 'Odesílám...' : 'Změnit email' }}
+          </button>
+        </div>
+
+        <div class="border-t border-border/50" />
+
+        <!-- GDPR Export -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Export dat (GDPR)</h4>
+          <p class="text-xs text-muted-foreground">Stáhněte si všechna vaše data ve formátu ZIP.</p>
+          <button @click="handleExport" :disabled="exporting" class="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-border hover:bg-secondary/50 text-sm font-medium disabled:opacity-50 transition-all">
+            <Download class="w-4 h-4" />
+            {{ exporting ? 'Stahuji...' : 'Stáhnout má data' }}
+          </button>
+        </div>
       </div>
 
       <!-- Notifications Settings -->

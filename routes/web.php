@@ -26,7 +26,7 @@ Route::get('/', [WallController::class, 'index'])->middleware('auth')->name('hom
 // Auth routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1');
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,1');
 
@@ -115,6 +115,17 @@ Route::middleware('auth')->group(function () {
 
     // Block
     Route::post('/users/{user}/block', [BlockController::class, 'toggle'])->middleware('throttle:10,1')->name('users.block');
+
+    // Settings — password & email
+    Route::put('/settings/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:5,1')->name('settings.password');
+    Route::put('/settings/email', [ProfileController::class, 'updateEmail'])->middleware('throttle:5,1')->name('settings.email');
+    Route::get('/settings/export', [ProfileController::class, 'exportData'])->middleware('throttle:1,60')->name('settings.export');
+
+    // Tips
+    Route::post('/users/{user}/tip', [WalletController::class, 'tip'])->middleware('throttle:20,1')->name('users.tip');
+
+    // Story views
+    Route::post('/stories/{story}/view', [App\Http\Controllers\StoryController::class, 'view'])->middleware('throttle:60,1')->name('stories.view');
 
     // Account deletion
     Route::delete('/account', [AccountController::class, 'destroy'])->middleware('throttle:3,1')->name('account.destroy');

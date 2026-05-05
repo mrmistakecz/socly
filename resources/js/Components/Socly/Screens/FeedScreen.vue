@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { Play, Plus, Crown, Flame, Clock, ImageOff, Bell } from 'lucide-vue-next'
 import FeedCard from './FeedCard.vue'
+import axios from 'axios'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const props = defineProps({
   posts: { type: Array, default: () => [] },
@@ -23,6 +25,9 @@ const storiesWithOwn = computed(() => {
   }
   return [own, ...props.stories]
 })
+
+const feedContainer = ref(null)
+const { isPulling, isRefreshing, pullDistance } = usePullToRefresh(feedContainer)
 
 const feedData = ref([...props.posts])
 const activeFilter = ref('latest')
@@ -91,7 +96,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh pb-32 lg:pb-8">
+  <div ref="feedContainer" class="min-h-dvh pb-32 lg:pb-8">
+    <!-- Pull to refresh indicator -->
+    <Transition name="slide-up">
+      <div v-if="isPulling || isRefreshing" class="flex justify-center py-4">
+        <div :class="['w-6 h-6 border-2 border-primary border-t-transparent rounded-full', isRefreshing ? 'animate-spin' : '']" />
+      </div>
+    </Transition>
     <!-- Desktop Header -->
     <div class="hidden lg:block sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 px-6 py-4">
       <div class="flex items-center justify-between">
@@ -140,6 +151,7 @@ onUnmounted(() => {
                   :src="story.avatar || '/images/default-avatar.svg'"
                   :alt="story.name"
                   class="w-full h-full rounded-full object-cover"
+                  loading="lazy"
                 />
               </div>
             </div>

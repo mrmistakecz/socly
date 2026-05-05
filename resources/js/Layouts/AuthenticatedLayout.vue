@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import { Home, Compass, Plus, MessageCircle, User, Settings, LogOut, Search, Shield } from 'lucide-vue-next'
 import Header from '@/Components/Socly/Header.vue'
@@ -53,6 +53,36 @@ const handleCloseLive = () => {
 const handleLogout = () => {
   router.post('/logout')
 }
+
+// Swipe gesture for tab switching
+const tabs = ['home', 'discover', 'messages']
+let swipeStartX = 0
+let swipeStartY = 0
+
+const onSwipeStart = (e) => {
+  swipeStartX = e.touches[0].clientX
+  swipeStartY = e.touches[0].clientY
+}
+
+const onSwipeEnd = (e) => {
+  const dx = e.changedTouches[0].clientX - swipeStartX
+  const dy = e.changedTouches[0].clientY - swipeStartY
+  if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx)) return
+
+  const idx = tabs.indexOf(activeTab.value)
+  if (dx < 0 && idx < tabs.length - 1) handleTabChange(tabs[idx + 1])
+  if (dx > 0 && idx > 0) handleTabChange(tabs[idx - 1])
+}
+
+onMounted(() => {
+  document.addEventListener('touchstart', onSwipeStart, { passive: true })
+  document.addEventListener('touchend', onSwipeEnd)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('touchstart', onSwipeStart)
+  document.removeEventListener('touchend', onSwipeEnd)
+})
 </script>
 
 <template>

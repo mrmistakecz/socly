@@ -92,41 +92,45 @@ class WallController extends Controller
                 'badge' => $i + 1,
             ]);
 
-        // Conversations: get unique users the current user has exchanged messages with
+        // Conversations: single query with subqueries for last_message + unread_count
         $conversations = collect();
         if ($user) {
-            $partnerIds = Message::where('sender_id', $user->id)
-                ->orWhere('receiver_id', $user->id)
-                ->selectRaw('CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as partner_id', [$user->id])
-                ->distinct()
-                ->pluck('partner_id');
+            $uid = $user->id;
 
-            $conversations = User::whereIn('id', $partnerIds)->get()->map(function ($partner) use ($user) {
-                $lastMsg = Message::where(function ($q) use ($user, $partner) {
-                    $q->where('sender_id', $user->id)->where('receiver_id', $partner->id);
-                })->orWhere(function ($q) use ($user, $partner) {
-                    $q->where('sender_id', $partner->id)->where('receiver_id', $user->id);
-                })->latest()->first();
-
-                $unread = Message::where('sender_id', $partner->id)
-                    ->where('receiver_id', $user->id)
-                    ->where('is_read', false)
-                    ->count();
-
-                return [
-                    'id' => $partner->id,
-                    'name' => $partner->name,
-                    'username' => $partner->username,
-                    'avatar' => $partner->avatar,
-                    'verified' => $partner->is_verified,
-                    'isVIP' => $partner->is_vip,
+            $conversations = DB::table('users')
+                ->joinSub(
+                    DB::table('messages')
+                        ->selectRaw("CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as partner_id", [$uid])
+                        ->selectRaw("MAX(id) as last_message_id")
+                        ->selectRaw("SUM(CASE WHEN receiver_id = ? AND is_read = false THEN 1 ELSE 0 END) as unread_count", [$uid])
+                        ->where(function ($q) use ($uid) {
+                            $q->where('sender_id', $uid)->orWhere('receiver_id', $uid);
+                        })
+                        ->groupByRaw("CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", [$uid]),
+                    'conv', fn ($join) => $join->on('users.id', '=', 'conv.partner_id')
+                )
+                ->leftJoin('messages as lm', 'lm.id', '=', 'conv.last_message_id')
+                ->select([
+                    'users.id', 'users.name', 'users.username', 'users.avatar',
+                    'users.is_verified as verified', 'users.is_vip as isVIP',
+                    'lm.body as last_body', 'lm.created_at as last_at',
+                    'conv.unread_count',
+                ])
+                ->orderByDesc('lm.created_at')
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'username' => $c->username,
+                    'avatar' => $c->avatar,
+                    'verified' => (bool) $c->verified,
+                    'isVIP' => (bool) $c->isVIP,
                     'isOnline' => false,
-                    'lastMessage' => $lastMsg?->body ?? '',
-                    'time' => $lastMsg ? $lastMsg->created_at->locale('cs')->diffForHumans(short: true) : '',
-                    'unread' => $unread,
+                    'lastMessage' => $c->last_body ?? '',
+                    'time' => $c->last_at ? \Carbon\Carbon::parse($c->last_at)->locale('cs')->diffForHumans(short: true) : '',
+                    'unread' => (int) $c->unread_count,
                     'hasMedia' => false,
-                ];
-            })->sortByDesc('unread')->values();
+                ]);
         }
 
         $trendingPosts = Post::with('user')

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AdminController extends Controller
@@ -88,14 +89,26 @@ class AdminController extends Controller
             return back()->with('error', 'Nelze smazat admina.');
         }
 
-        $user->posts()->delete();
+        // Delete media files
+        if ($user->avatar && !str_starts_with($user->avatar, '/images/')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
+        }
+        if ($user->cover_image && !str_starts_with($user->cover_image, '/images/')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $user->cover_image));
+        }
+        $user->posts()->each(function ($post) {
+            if ($post->image) Storage::disk('public')->delete(str_replace('/storage/', '', $post->image));
+            if ($post->thumbnail) Storage::disk('public')->delete(str_replace('/storage/', '', $post->thumbnail));
+        });
+
+        $user->posts()->forceDelete();
         $user->likes()->delete();
         $user->comments()->delete();
         $user->bookmarks()->delete();
         $user->sentMessages()->delete();
         $user->receivedMessages()->delete();
         DB::table('follows')->where('follower_id', $user->id)->orWhere('following_id', $user->id)->delete();
-        $user->delete();
+        $user->forceDelete();
 
         return back()->with('success', 'Uživatel byl smazán.');
     }
